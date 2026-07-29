@@ -32,7 +32,7 @@ const AIChatPanel: React.FC<AIChatProps> = ({ terminalOutput, instanceId }) => {
     try {
       const res = await apiClient.post('/api/ai/analyze-terminal', { output })
       if (res.success) {
-        setMessages(prev => [...prev, { role: 'assistant', content: res.answer }])
+        setMessages(prev => [...prev, { role: 'assistant', content: (res as any).answer }])
       }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: '分析失败，请稍后重试。' }])
@@ -52,7 +52,7 @@ const AIChatPanel: React.FC<AIChatProps> = ({ terminalOutput, instanceId }) => {
         terminalOutput: terminalOutput?.substring(0, 3000)
       })
       if (res.success) {
-        setMessages(prev => [...prev, { role: 'assistant', content: res.answer }])
+        setMessages(prev => [...prev, { role: 'assistant', content: (res as any).answer }])
       }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: '查询失败，请检查网络连接。' }])
