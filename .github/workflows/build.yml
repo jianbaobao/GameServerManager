@@ -135,7 +135,7 @@ jobs:
           retention-days: 30
 
   build_docker:
-    if: github.event.inputs.build_docker == 'true' || github.event_name == 'push' || github.event_name == 'release'
+    if: github.event.inputs.build_docker == 'true'
     runs-on: ubuntu-latest
     steps:
       # 第一步：检出代码
