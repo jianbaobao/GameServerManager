@@ -11,7 +11,7 @@ cat << EOF
                                |___/
 EOF
 echo "GSManager3安装脚本 By tzdtwsj"
-echo "开源地址：https://github.com/GSManagerXZ/GameServerManager"
+echo "开源地址：https://github.com/jianbaobao/GameServerManager"
 echo "========================================"
 
 if test "$(id -u)" != "0"; then
@@ -106,9 +106,9 @@ cd "$install_path"
 
 if test "$install_type" = "1"; then
 	if command -v curl &>/dev/null;then
-		curl -Lo gsm3.tgz https://ghfast.top/https://github.com/GSManagerXZ/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
+		curl -Lo gsm3.tgz https://ghfast.top/https://github.com/jianbaobao/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
 	elif command -v wget &>/dev/null; then
-		wget -O gsm3.tgz https://ghfast.top/https://github.com/GSManagerXZ/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
+		wget -O gsm3.tgz https://ghfast.top/https://github.com/jianbaobao/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
 	else
 		echo -e "\x1b[31m错误：既没有安装curl也没有安装wget，无法下载gsm3程序，请安装这俩其中一个工具后再次执行该脚本！"
 		exit 1

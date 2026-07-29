@@ -4,10 +4,10 @@
 
 **新一代游戏服务器管理平台 - 让游戏服务器的部署、管理和维护变得简单高效**
 
-[![GitHub Stars](https://badgen.net/github/stars/GSManagerXZ/GameServerManager)](https://github.com/GSManagerXZ/GameServerManager/stargazers)
-[![GitHub Release](https://badgen.net/github/release/GSManagerXZ/GameServerManager)](https://github.com/GSManagerXZ/GameServerManager/releases)
+[![GitHub Stars](https://badgen.net/github/stars/jianbaobao/GameServerManager)](https://github.com/jianbaobao/GameServerManager/stargazers)
+[![GitHub Release](https://badgen.net/github/release/jianbaobao/GameServerManager)](https://github.com/jianbaobao/GameServerManager/releases)
 [![Docker Pulls](https://badgen.net/docker/pulls/xiaozhu674/gameservermanager)](https://hub.docker.com/r/xiaozhu674/gameservermanager)
-[![License](https://badgen.net/github/license/GSManagerXZ/GameServerManager)](https://github.com/GSManagerXZ/GameServerManager/blob/main/LICENSE)
+[![License](https://badgen.net/github/license/jianbaobao/GameServerManager)](https://github.com/jianbaobao/GameServerManager/blob/main/LICENSE)
 
 [📖 文档站](http://docs.gsm.xiaozhuhouses.asia/) • [🌐 官方网站](http://gsm.xiaozhuhouses.asia/) • [💬 QQ群](https://qm.qq.com/q/oNd4HvMj6M)
 
@@ -37,6 +37,12 @@ GameServerManager 3.0（简称GSM3）是一个基于现代化技术栈的游戏�
 - 🎨 **可视化配置** - 游戏配置文件的图形化编辑界面
 
 ---
+
+## 快速安装
+
+```bash
+curl -Lo install-gsm3.sh https://raw.githubusercontent.com/jianbaobao/GameServerManager/main/install-gsm3.sh && sudo bash install-gsm3.sh
+```
 
 ## 本地开发部署
 
@@ -162,7 +168,7 @@ GSManager3/
 
 ## 📞 支持与反馈
 
-- 🐛 **问题反馈**：[GitHub Issues](https://github.com/GSManagerXZ/GameServerManager/issues)
+- 🐛 **问题反馈**：[GitHub Issues](https://github.com/jianbaobao/GameServerManager/issues)
 - 💬 **QQ交流群**：1040201322
 - 📖 **详细文档**：[GSM3 文档站](http://docs.gsm.xiaozhuhouses.asia/)
 - 🌐 **官方网站**：[GSM3 官网](http://gsm.xiaozhuhouses.asia/)
@@ -187,8 +193,8 @@ GSManager3/
 ## 🔄 版本说明
 
 - **GSM3.0** - 全新架构，基于 React + TypeScript + Node.js
-- **GSM2.0** - 基于 Python + Flask 的经典版本 [查看源码](https://github.com/GSManagerXZ/GameServerManager2)
-- **GSM1.0** - 游戏容器 [查看源码](https://github.com/GSManagerXZ/Game_container)
+- **GSM2.0** - 基于 Python + Flask 的经典版本 [查看源码](https://github.com/jianbaobao/GameServerManager2)
+- **GSM1.0** - 游戏容器 [查看源码](https://github.com/jianbaobao/GameServerManager_container)
 
 ### 主要更新
 
@@ -204,7 +210,7 @@ GSManager3/
 
 ## 📈 项目统计
 
-![Star History](https://api.star-history.com/svg?repos=GSManagerXZ/GameServerManager&type=Date)
+![Star History](https://api.star-history.com/svg?repos=jianbaobao/GameServerManager&type=Date)
 
 ---
 
