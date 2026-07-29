@@ -104,20 +104,61 @@ echo "开始安装..."
 mkdir -pv "$install_path"
 cd "$install_path"
 
+# GitHub 下载镜像源列表（自动回退）
+GITHUB_MIRRORS=(
+  "https://ghfast.top/https://github.com"
+  "https://ghproxy.net/https://github.com"
+  "https://ghproxy.com/https://github.com"
+  "https://hub.fastgit.xyz/https://github.com"
+  "https://github.moeyy.xyz/https://github.com"
+  "https://dgithub.xyz/https://github.com"
+  "https://github.com"  # 官方直连（最后尝试）
+)
+
+# 带镜像回退的下载函数
+download_with_mirror() {
+  local file_url="$1"
+  local output_file="$2"
+  local downloader
+  local mirror_url
+
+  if command -v curl &>/dev/null; then
+    downloader="curl -kLo"
+  elif command -v wget &>/dev/null; then
+    downloader="wget --no-check-certificate -O"
+  else
+    echo -e "\x1b[31m错误：未找到 curl 或 wget，无法下载\x1b[0m"
+    return 1
+  fi
+
+  # 从第一个镜像开始尝试，失败后自动切换到下一个
+  for mirror in "${GITHUB_MIRRORS[@]}"; do
+    mirror_url="${mirror}${file_url}"
+    echo -e "\x1b[33m正在尝试镜像: ${mirror}\x1b[0m"
+    if $downloader "$output_file" "$mirror_url" 2>/dev/null; then
+      if [ -f "$output_file" ] && [ -s "$output_file" ]; then
+        echo -e "\x1b[32m下载成功！\x1b[0m"
+        return 0
+      fi
+    fi
+    echo -e "\x1b[31m镜像失败，切换下一个...\x1b[0m"
+    rm -f "$output_file" 2>/dev/null
+  done
+
+  echo -e "\x1b[31m所有镜像源都下载失败，请检查网络连接后重试\x1b[0m"
+  return 1
+}
+
 if test "$install_type" = "1"; then
-	if command -v curl &>/dev/null;then
-		curl -Lo gsm3.tgz https://ghfast.top/https://github.com/jianbaobao/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
-	elif command -v wget &>/dev/null; then
-		wget -O gsm3.tgz https://ghfast.top/https://github.com/jianbaobao/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz
-	else
-		echo -e "\x1b[31m错误：既没有安装curl也没有安装wget，无法下载gsm3程序，请安装这俩其中一个工具后再次执行该脚本！"
-		exit 1
-	fi
-	if test "$?" != "0"; then
-		echo -e "\x1b[31m下载似乎失败了...\x1b[0m"
-		rm -rf gsm3.tgz
-		exit 1
-	fi
+  # 下载 GitHub Release 压缩包（自动多镜像回退）
+  GH_RELEASE_PATH="/jianbaobao/GameServerManager/releases/latest/download/gsm3-management-panel-linux.tar.gz"
+
+  if download_with_mirror "$GH_RELEASE_PATH" "gsm3.tgz"; then
+    echo "下载完毕，解压中，请稍等"
+  else
+    rm -rf gsm3.tgz
+    exit 1
+  fi
 	echo "下载完毕，解压中，请稍等"
 	tar -xzf gsm3.tgz -C "$install_path"
 	rm -rf gsm3.tgz
@@ -150,11 +191,11 @@ if test "$install_type" = "1"; then
 		if [ "$PTY_VALID" = "false" ]; then
 			echo -e "\x1b[33m正在下载PTY二进制文件...\x1b[0m"
 			mkdir -p "$install_path/data/lib"
-			PTY_URL="https://github.com/MCSManager/PTY/releases/download/latest/$PTY_NAME"
-			if command -v curl &>/dev/null; then
-				curl -Lo "$PTY_FILE" "$PTY_URL"
-			elif command -v wget &>/dev/null; then
-				wget -O "$PTY_FILE" "$PTY_URL"
+			PTY_RELEASE_PATH="/MCSManager/PTY/releases/download/latest/$PTY_NAME"
+			if download_with_mirror "$PTY_RELEASE_PATH" "$PTY_FILE"; then
+				echo "PTY 下载完成"
+			else
+				echo -e "\x1b[33mPTY 下载失败，继续安装流程...\x1b[0m"
 			fi
 			if [ -f "$PTY_FILE" ] && file "$PTY_FILE" 2>/dev/null | grep -q "ELF"; then
 				echo -e "\x1b[32mPTY下载完成\x1b[0m"
