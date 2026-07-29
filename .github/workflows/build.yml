@@ -64,6 +64,45 @@ jobs:
           path: dist/package/
           retention-days: 30
 
+  # === 发布到 GitHub Release ===
+  release:
+    needs: [build_linux, build_windows]
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Linux build
+        uses: actions/download-artifact@v4
+        with:
+          name: gsm3-management-panel-linux-build
+          path: dist/package-linux/
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: gsm3-management-panel-windows-build
+          path: dist/package-windows/
+      - name: Package Linux .tar.gz
+        run: |
+          cd dist/package-linux
+          mv * ../gsm3-management-panel-linux-v${{ github.ref_name }}.tar.gz 2>/dev/null || \
+          tar -czf ../gsm3-management-panel-linux-v${{ github.ref_name }}.tar.gz .
+          cd ../..
+      - name: Package Windows .zip
+        run: |
+          cd dist/package-windows
+          powershell Compress-Archive -Path * -DestinationPath ../gsm3-management-panel-windows-v${{ github.ref_name }}.zip 2>/dev/null || \
+          zip -r ../gsm3-management-panel-windows-v${{ github.ref_name }}.zip .
+          cd ../..
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/gsm3-management-panel-linux-v${{ github.ref_name }}.tar.gz
+            dist/gsm3-management-panel-windows-v${{ github.ref_name }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build_windows:
     if: github.event.inputs.build_windows == 'true' || github.event_name == 'push' || github.event_name == 'release'
     runs-on: windows-latest
@@ -127,8 +166,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            xiaozhu674/gameservermanager:3.12.0
-            xiaozhu674/gameservermanager:latest
+            jianbaobao/gameservermanager:${{ github.ref_name }}
+            jianbaobao/gameservermanager:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -164,7 +203,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            xiaozhu674/gameservermanager:3.12.0-arm64-beta
+            jianbaobao/gameservermanager:${{ github.ref_name }}-arm64-beta
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
