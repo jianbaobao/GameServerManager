@@ -6,6 +6,8 @@ import PythonManager from '../utils/pythonManager.js'
 import os from 'os'
 import https from 'https'
 import http from 'http'
+import { promises as fs } from 'fs'
+import path from 'path'
 
 const router = Router()
 
@@ -111,12 +113,29 @@ router.get('/market', authenticateToken, async (req: Request, res: Response) => 
       data: marketData
     })
   } catch (error: any) {
-    logger.error('获取实例市场列表失败:', error)
-    res.status(500).json({
-      success: false,
-      error: '获取实例市场列表失败',
-      message: error.message
-    })
+    logger.warn('Remote market unavailable, using local data:', error.message)
+    try {
+      const paths = [
+        path.join(process.cwd(), 'data', 'games', 'installgame.json'),
+        path.join(process.cwd(), 'server', 'data', 'games', 'installgame.json'),
+      ]
+      let gamesData: any = {}
+      for (const p of paths) {
+        try { gamesData = JSON.parse(await fs.readFile(p, 'utf-8')); break } catch {}
+      }
+      const pf = os.platform() === 'win32' ? 'Windows' : 'Linux'
+      const localMarket = Object.entries(gamesData).map(([key, info]: [string, any]) => {
+        const cmd = info.start_command
+        let command = ''
+        if (typeof cmd === 'string') command = cmd
+        else if (cmd) command = cmd[pf] || cmd['Linux'] || cmd['Windows'] || ''
+        return { name: info.game_nameCN || key, gameKey: key, command: command || 'Set manually', stopcommand: 'ctrl+c', category: info.category || 'other', memory: info.memory || 4, versions: info.versions || ['public'] }
+      })
+      return res.json({ success: true, data: localMarket, source: 'local' })
+    } catch (fallbackError) {
+      logger.error('Local market data also failed:', fallbackError)
+      res.status(500).json({ success: false, error: 'Failed to get market list', message: fallbackError.message })
+    }
   }
 })
 
@@ -164,7 +183,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       })
     }
     
-    const { name, description, workingDirectory, startCommand, autoStart, stopCommand, enableStreamForward, programPath, terminalUser, instanceType, javaVersion } = req.body
+    const { name, description, workingDirectory, startCommand, autoStart, stopCommand, enableStreamForward, programPath, terminalUser, instanceType, javaVersion, gameKey, gameVersion } = req.body
     
     // 根据实例类型设置默认值
     const actualInstanceType = instanceType || 'generic'
@@ -193,7 +212,15 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: '缺少必填字段',
-        message: '实例名称和工作目录为必填项'
+        message: '实例名称和工作目录为必塡项'
+      })
+    }
+    // 验证工作目录不含危险字符
+    if (/[$`;|&<>]/.test(workingDirectory)) {
+      return res.status(400).json({
+        success: false,
+        error: '无效的工作目录',
+        message: '工作目录包含不允许的字符'
       })
     }
     
@@ -225,9 +252,11 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       enableStreamForward: Boolean(enableStreamForward),
       programPath: programPath?.trim() || '',
       instanceType: actualInstanceType,
-      javaVersion: javaVersion?.trim() || undefined
+      javaVersion: javaVersion?.trim() || undefined,
+      gameKey: gameKey?.trim() || undefined,
+      gameVersion: gameVersion?.trim() || undefined
     }
-    // 处理terminalUser字段：如果是空字符串则设为空字符串，如果有值则设置值
+    // Handle terminalUser field：如果是空字符串则设为空字符串，如果有值则设置值
     if (typeof terminalUser === 'string') {
       instanceData.terminalUser = terminalUser.trim()
     }
@@ -262,7 +291,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     }
     
     const { id } = req.params
-    const { name, description, workingDirectory, startCommand, autoStart, stopCommand, enableStreamForward, programPath, terminalUser, instanceType, javaVersion } = req.body
+    const { name, description, workingDirectory, startCommand, autoStart, stopCommand, enableStreamForward, programPath, terminalUser, instanceType, javaVersion, gameKey, gameVersion } = req.body
     
     // 根据实例类型设置默认值
     const actualInstanceType = instanceType || 'generic'
@@ -291,7 +320,15 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: '缺少必填字段',
-        message: '实例名称和工作目录为必填项'
+        message: '实例名称和工作目录为必塡项'
+      })
+    }
+    // 验证工作目录不含危险字符
+    if (/[$`;|&<>]/.test(workingDirectory)) {
+      return res.status(400).json({
+        success: false,
+        error: '无效的工作目录',
+        message: '工作目录包含不允许的字符'
       })
     }
     
@@ -323,9 +360,11 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
       enableStreamForward: Boolean(enableStreamForward),
       programPath: programPath?.trim() || '',
       instanceType: actualInstanceType,
-      javaVersion: javaVersion?.trim() || undefined
+      javaVersion: javaVersion?.trim() || undefined,
+      gameKey: gameKey?.trim() || undefined,
+      gameVersion: gameVersion?.trim() || undefined
     }
-    // 处理terminalUser字段：如果是空字符串则设为空字符串，如果有值则设置值
+    // Handle terminalUser field：如果是空字符串则设为空字符串，如果有值则设置值
     if (typeof terminalUser === 'string') {
       instanceData.terminalUser = terminalUser.trim()
     }
@@ -797,5 +836,53 @@ export function setupInstanceRoutes(manager: InstanceManager) {
   setInstanceManager(manager)
   return router
 }
+
+
+// Get game version info from Steam API
+router.get('/steam-version/:appId', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { appId } = req.params
+    if (!appId || !/^\d+$/.test(appId)) {
+      return res.status(400).json({ success: false, error: '无效的 AppID' })
+    }
+    // Try Steam Web API for depot/version info
+    const steamApiKey = process.env.STEAM_API_KEY || ''
+    if (steamApiKey) {
+      // Steam API: Get product info
+      const apiUrl = `https://api.steampowered.com/ISteamApps/GetAppBuildNumber/v1/?appid=${appId}&key=${steamApiKey}`
+      try {
+        const response = await fetch(apiUrl)
+        const data = await response.json()
+        return res.json({ success: true, data: { appId, steamData: data, source: 'steam_api' } })
+      } catch (err) {
+        logger.warn('Steam API request failed:', err)
+      }
+    }
+    // Fallback: return basic info from local config
+    const paths = [
+      path.join(process.cwd(), 'data', 'games', 'installgame.json'),
+      path.join(process.cwd(), 'server', 'data', 'games', 'installgame.json'),
+    ]
+    let result: any = { appId, versions: ['public'], source: 'local' }
+    for (const p of paths) {
+      try {
+        const raw = JSON.parse(await fs.readFile(p, 'utf-8'))
+        for (const [key, info] of Object.entries(raw)) {
+          const g = info as any
+          if (String(g.appid) === appId) {
+            result = { ...result, gameKey: key, gameName: g.game_nameCN, versions: g.versions || ['public'], category: g.category }
+            break
+          }
+        }
+        break
+      } catch {}
+    }
+    res.json({ success: true, data: result })
+  } catch (error: any) {
+    logger.error('Steam version query failed:', error)
+    res.status(500).json({ success: false, error: '查询失败', message: error.message })
+  }
+})
+
 
 export default router

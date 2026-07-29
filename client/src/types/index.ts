@@ -372,6 +372,8 @@ export interface Instance {
   terminalUser?: string
   instanceType?: InstanceType
   javaVersion?: string
+  gameKey?: string
+  gameVersion?: string
 }
 
 export interface CreateInstanceRequest {
@@ -386,6 +388,8 @@ export interface CreateInstanceRequest {
   terminalUser?: string
   instanceType?: InstanceType
   javaVersion?: string
+  gameKey?: string
+  gameVersion?: string
 }
 
 export interface InstanceState {

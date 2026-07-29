@@ -4,10 +4,14 @@ import logger from '../utils/logger.js'
 import Joi from 'joi'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { authenticateToken } from '../middleware/auth.js'
 
 const execAsync = promisify(exec)
 
 const router = Router()
+
+// All game routes require authentication
+router.use(authenticateToken)
 
 // 注意：这里需要在实际使用时注入GameManager实例
 let gameManager: GameManager

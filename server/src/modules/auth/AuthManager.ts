@@ -136,7 +136,13 @@ export class AuthManager {
   }
 
   private async createDefaultAdmin(): Promise<void> {
-    const defaultPassword = 'admin123'
+    // Generate a strong random password for default admin
+    const defaultPassword = require('crypto').randomBytes(16).toString('hex')
+    this.logger.warn('='.repeat(60))
+    this.logger.warn('!! DEFAULT ADMIN ACCOUNT CREATED !!')
+    this.logger.warn('!! Username: admin / Password: ' + defaultPassword)
+    this.logger.warn('!! Change this password immediately after first login!')
+    this.logger.warn('='.repeat(60))
     const hashedPassword = await bcrypt.hash(defaultPassword, 12)
     
     const adminUser: User = {

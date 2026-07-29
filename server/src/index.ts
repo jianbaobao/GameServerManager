@@ -21,6 +21,7 @@ import { SteamCMDManager } from './modules/steamcmd/SteamCMDManager.js'
 import { SchedulerManager } from './modules/scheduler/SchedulerManager.js'
 import { PluginManager } from './modules/plugin/PluginManager.js'
 import { FileWatchManager } from './modules/file/FileWatchManager.js'
+import { AIAssistant } from './modules/ai/AIAssistant.js'
 import { setupTerminalRoutes } from './routes/terminal.js'
 import { setupGameRoutes } from './routes/games.js'
 import { setupSystemRoutes } from './routes/system.js'
@@ -46,6 +47,7 @@ import rconRouter from './routes/rcon.js'
 import environmentRouter, { setEnvironmentSocketIO, setEnvironmentConfigManager } from './routes/environment.js'
 import { setupDeveloperRoutes } from './routes/developer.js'
 import wallpaperRouter from './routes/wallpaper.js'
+import aiRouter, { setAIAssistant as setAIAssistantRoute } from './routes/ai.js'
 import networkRouter from './routes/network.js'
 import cloudBuildRouter from './routes/cloudBuild.js'
 import fileDeployRouter, { setFileDeployDependencies } from './routes/fileDeploy.js'
@@ -734,14 +736,19 @@ async function startServer() {
     setEnvironmentConfigManager(configManager)
     app.use('/api/environment', environmentRouter)
 
-      // 导出 fileWatchManager 给文件路由使用
+      // Export fileWatchManager for file routes
       ; (global as any).fileWatchManager = fileWatchManager
+
+    // Initialize AI Assistant
+    const aiAssistant = new AIAssistant(logger)
+    setAIAssistantRoute(aiAssistant)
 
     // 设置开发者路由
     app.use('/api/developer', setupDeveloperRoutes(configManager))
 
     // 壁纸路由
     app.use('/api/wallpaper', wallpaperRouter)
+app.use('/api/ai', aiRouter)
 
     // 网络检测路由
     app.use('/api/network', networkRouter)

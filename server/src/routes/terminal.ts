@@ -1,8 +1,12 @@
 import { Router, Request, Response } from 'express'
 import { TerminalManager } from '../modules/terminal/TerminalManager.js'
 import logger from '../utils/logger.js'
+import { authenticateToken } from '../middleware/auth.js'
 
 const router = Router()
+
+// All terminal routes require authentication
+router.use(authenticateToken)
 
 // 注意：这里需要在实际使用时注入TerminalManager实例
 let terminalManager: TerminalManager

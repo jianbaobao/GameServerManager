@@ -14,8 +14,86 @@ import { SteamCMDManager } from '../modules/steamcmd/SteamCMDManager.js'
 import { ConfigManager } from '../modules/config/ConfigManager.js'
 import logger from '../utils/logger.js'
 import { authenticateToken } from '../middleware/auth.js'
+import { isPrivateHost, extractHost } from '../utils/networkSecurity.js'
 
 const execFileAsync = promisify(execFile)
+
+// Network error categories for user-friendly messages
+interface NetworkErrorInfo {
+  type: 'dns' | 'timeout' | 'connection' | 'ssl' | 'http' | 'unknown'
+  message: string
+  suggestion: string
+  mirrorFallback?: string
+}
+
+function classifyNetworkError(error: any, url?: string): NetworkErrorInfo {
+  const msg = (error?.message || error?.toString() || '').toLowerCase()
+  if (msg.includes('enotfound') || msg.includes('getaddrinfo') || msg.includes('dns')) {
+    return {
+      type: 'dns',
+      message: '网络连接失败，无法解析域名',
+      suggestion: '请检查网络连接和 DNS 服务器配置。可在控制台中使用“网络检测”功能进行诊断。',
+      mirrorFallback: url ? `尝试使用别的网络终端或参考以下免费服务：${url}` : undefined
+    }
+  }
+  if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('econnreset')) {
+    return {
+      type: 'timeout',
+      message: '网络连接超时，服务器未响应',
+      suggestion: '请检查网络稳定性和服务器状态。可尝试使用域名解析加速服务。'
+    }
+  }
+  if (msg.includes('econnrefused') || msg.includes('connection refused')) {
+    return {
+      type: 'connection',
+      message: '连接被拒绝，目标服务器未启动或端口不对',
+      suggestion: '请确认目标服务正常运行中，或检查防火墙设置。'
+    }
+  }
+  if (msg.includes('certificate') || msg.includes('ssl') || msg.includes('tls')) {
+    return {
+      type: 'ssl',
+      message: 'SSL/TLS 证书验证失败',
+      suggestion: '可能是服务器证书过期或被中间人攻击。请确保系统时间正确。'
+    }
+  }
+  if (msg.includes('status code') || msg.includes('status')) {
+    return {
+      type: 'http',
+      message: `HTTP 响应异常: ${error?.response?.status || error?.statusCode || '未知'}`,
+      suggestion: '服务器返回了意外的响应。请稍后重试。'
+    }
+  }
+  return {
+    type: 'unknown',
+    message: msg || '未知网络错误',
+    suggestion: '请检查网络连接后重试，或查看控制台中的网络检测结果。'
+  }
+}
+
+// Retry wrapper with exponential backoff
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { maxRetries?: number; baseDelay?: number; onRetry?: (attempt: number, err: any) => void } = {}
+): Promise<T> {
+  const maxRetries = options.maxRetries ?? 3
+  const baseDelay = options.baseDelay ?? 1000
+  let lastError: any
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 500
+        if (options.onRetry) options.onRetry(attempt + 1, err)
+        await new Promise(r => setTimeout(r, delay))
+      }
+    }
+  }
+  throw lastError
+}
 
 // 平台枚举
 enum Platform {

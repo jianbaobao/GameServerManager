@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import { isPrivateHost, extractHost } from '../utils/networkSecurity.js'
 import axios from 'axios'
 import fs from 'fs-extra'
 import path from 'path'
@@ -200,6 +201,12 @@ async function downloadArchive(deployment: ActiveDeployment, url: string): Promi
   }
   if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
     throw new Error('下载链接仅支持 HTTP 或 HTTPS')
+  }
+
+  // SSRF protection
+  const dlHost = extractHost(url)
+  if (dlHost && isPrivateHost(dlHost)) {
+    throw new Error('Download from internal/private addresses is not allowed')
   }
 
   emitLog(deployment, '正在连接下载地址...')

@@ -105,30 +105,62 @@ const upload = multer({
   }
 })
 
-// 安全路径检查
+// Allowed base directories for path sandboxing
+const getAllowedBaseDirectories = (): string[] => {
+  const cwd = process.cwd()
+  const bases = [
+    path.join(cwd, 'data'),
+    path.join(cwd, 'uploads'),
+    path.join(cwd, 'logs'),
+    path.join(cwd, 'temp'),
+  ]
+  return [...new Set(bases.map(b => path.resolve(b).toLowerCase()))]
+}
+
+// Check if path is within allowed directories (with symlink resolution)
+const isPathInAllowedDir = (resolvedPath: string): boolean => {
+  let realPath = resolvedPath
+  try {
+    realPath = fsSync.realpathSync(resolvedPath)
+  } catch {}
+  const normalizedResolved = realPath.toLowerCase()
+  const allowedDirs = getAllowedBaseDirectories()
+  return allowedDirs.some(dir => normalizedResolved.startsWith(dir + path.sep) || normalizedResolved === dir)
+}
+
+// Secure path validation - double URL decode + sandbox check
 const isValidPath = (filePath: string): boolean => {
   if (!filePath || typeof filePath !== 'string') {
     return false
   }
 
-  // 先解码URL编码的路径
-  const decodedPath = decodeURIComponent(filePath)
+  // Multiple URL decode to prevent double-encoding bypass
+  let decodedPath = decodeURIComponent(filePath)
+  let prev = ''
+  while (decodedPath !== prev) {
+    prev = decodedPath
+    try { decodedPath = decodeURIComponent(decodedPath) } catch { break }
+  }
 
   const normalizedPath = path.normalize(decodedPath)
 
-  // 检查是否包含危险的路径遍历
+  // Check for path traversal
   if (normalizedPath.includes('..')) {
     return false
   }
 
-  // 在Windows上，路径可能以盘符开头（如 C:\）或UNC路径（如 \\server\share）
-  // 在Unix系统上，绝对路径以 / 开头
-  const isAbsolute = path.isAbsolute(normalizedPath)
+  // Windows reserved device names
+  if (process.platform === 'win32') {
+    const devName = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$/i
+    if (devName.test(path.basename(normalizedPath))) return false
+  }
 
-  // 特殊处理 Windows 盘符路径（如 D: 或 D:/）
-  const isWindowsDrive = process.platform === 'win32' && /^[A-Za-z]:[\\/]?$/.test(normalizedPath)
+  // Resolve full path and verify it's inside allowed directories
+  const resolvedPath = path.isAbsolute(normalizedPath)
+    ? normalizedPath
+    : path.resolve(process.cwd(), normalizedPath)
 
-  return isAbsolute || isWindowsDrive
+  return isPathInAllowedDir(resolvedPath)
 }
 // 修复Windows路径格式的工具函数
 const fixWindowsPath = (filePath: string): string => {
@@ -324,6 +356,13 @@ router.get('/resolve-path', authenticateToken, async (req: Request, res: Respons
       return res.status(400).json({
         success: false,
         message: '无效的路径'
+      })
+    }
+
+    if (!isValidPath(rawPath as string)) {
+      return res.status(403).json({
+        success: false,
+        message: '路径超出允许范围'
       })
     }
 
@@ -622,6 +661,10 @@ router.get('/preview', authenticateToken, async (req: Request, res: Response) =>
 
     const decodedFilePath = decodeURIComponent(filePath as string)
     console.log('Preview request - Decoded path:', decodedFilePath)
+
+    if (!isValidPath(decodedFilePath)) {
+      return res.status(403).json({ success: false, message: 'Path outside allowed directories' })
+    }
 
     // 处理相对路径，转换为基于工作目录的绝对路径
     let absoluteFilePath: string
@@ -934,6 +977,9 @@ router.post('/check-paste-conflict', authenticateToken, async (req: Request, res
         message: '缺少目标路径'
       })
     }
+    if (!isValidPath(targetPath)) {
+      return res.status(403).json({ success: false, message: 'Path outside allowed directories' })
+    }
 
     const fixedTargetPath = fixWindowsPath(targetPath)
 
@@ -947,6 +993,9 @@ router.post('/check-paste-conflict', authenticateToken, async (req: Request, res
     }> = []
 
     for (const sourcePath of sourcePaths) {
+      if (!isValidPath(sourcePath)) {
+        return res.status(403).json({ success: false, message: 'Source path outside allowed directories' })
+      }
       const fixedSource = fixWindowsPath(sourcePath)
       const fileName = path.basename(fixedSource)
       const targetFilePath = path.join(fixedTargetPath, fileName)
@@ -1295,7 +1344,13 @@ router.post('/upload/check-conflict', authenticateToken, async (req: Request, re
   try {
     const { targetPath, fileNames, filePaths } = req.body
 
-    if (!targetPath || !fileNames || !Array.isArray(fileNames)) {
+    if (!targetPath || !isValidPath(targetPath)) {
+      if (!targetPath) {
+        return res.status(400).json({ success: false, message: '缺少必要参数: targetPath 和 fileNames' })
+      }
+      return res.status(403).json({ success: false, message: '路径超出允许范围' })
+    }
+    if (!fileNames || !Array.isArray(fileNames)) {
       return res.status(400).json({
         success: false,
         message: '缺少必要参数: targetPath 和 fileNames'
@@ -1393,6 +1448,10 @@ router.post('/upload', authenticateToken, upload.array('files'), async (req: Req
     if (!targetPath) {
       console.log('Error: Invalid target path')
       return res.status(400).json({ success: false, message: 'Invalid target path' })
+    }
+
+    if (!isValidPath(targetPath)) {
+      return res.status(403).json({ success: false, message: 'Path outside allowed directories' })
     }
 
     if (!files || files.length === 0) {
@@ -1595,10 +1654,10 @@ router.post('/upload/chunk', authenticateToken, upload.single('chunk'), async (r
     const chunkFile = req.file
 
     if (!uploadId || !fileName || !fileSize || chunkIndex === undefined || !totalChunks || !chunkHash || !targetPath || !chunkFile) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少必要参数'
-      })
+      return res.status(400).json({ success: false, message: 'Missing required fields' })
+    }
+    if (!isValidPath(targetPath)) {
+      return res.status(403).json({ success: false, message: 'Path outside allowed directories' })
     }
 
     const chunkManager = ChunkUploadManager.getInstance()
@@ -1665,10 +1724,10 @@ router.post('/upload/merge', authenticateToken, async (req: Request, res: Respon
     // - rename: 自动重命名（添加序号）
 
     if (!uploadId || !fileName || !fileSize || !totalChunks || !targetPath) {
-      return res.status(400).json({
-        success: false,
-        message: '缺少必要参数'
-      })
+      return res.status(400).json({ success: false, message: 'Missing required fields' })
+    }
+    if (!isValidPath(targetPath)) {
+      return res.status(403).json({ success: false, message: 'Path outside allowed directories' })
     }
 
     const chunkManager = ChunkUploadManager.getInstance()
@@ -2195,6 +2254,10 @@ router.post('/mkdir', authenticateToken, async (req: Request, res: Response) => 
         success: false,
         message: '缺少目录路径参数'
       })
+    }
+
+    if (!isValidPath(dirPath)) {
+      return res.status(403).json({ success: false, message: '路径超出允许范围' })
     }
 
     const fullPath = path.resolve(dirPath)

@@ -31,6 +31,8 @@ export interface Instance {
   terminalUser?: string
   instanceType?: InstanceType
   javaVersion?: string
+  gameKey?: string
+  gameVersion?: string
 }
 
 export interface CreateInstanceRequest {
@@ -45,6 +47,8 @@ export interface CreateInstanceRequest {
   terminalUser?: string
   instanceType?: InstanceType
   javaVersion?: string
+  gameKey?: string
+  gameVersion?: string
 }
 
 export class InstanceManager extends EventEmitter {
@@ -312,7 +316,9 @@ export class InstanceManager extends EventEmitter {
           programPath: instance.programPath,
           terminalUser: instance.terminalUser,
           instanceType: instance.instanceType,
-          javaVersion: instance.javaVersion
+          javaVersion: instance.javaVersion,
+          gameKey: instance.gameKey,
+          gameVersion: instance.gameVersion
         }))
         
         await fs.writeFile(this.configPath, JSON.stringify(instancesData, null, 2))

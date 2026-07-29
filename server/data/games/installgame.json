@@ -20,7 +20,15 @@
       "京东云": {
         "https://images.xiaozhuhouses.asia:3000/i/2025/09/26/dqv8ii.png": "https://www.jdcloud.com/cn/pages/gamecenter?utm_source=cpscf&type=1&channelReferrer=3578775033284104&channelCode=JD_YTKQDFX"
       }
-    }
+    },
+    "start_command": {
+      "Windows": ".\\PalServer.exe -port=8211 -players=32 -log",
+      "Linux": "./PalServer.sh -port=8211 -players=32 -log"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "survival"
   },
   "SCUM": {
     "game_nameCN": "人渣",
@@ -37,7 +45,14 @@
       "京东云": {
         "https://images.xiaozhuhouses.asia:3000/i/2025/09/26/dqv8ii.png": "https://www.jdcloud.com/cn/pages/gamecenter?utm_source=cpscf&type=1&channelReferrer=3578775033284104&channelCode=JD_YTKQDFX"
       }
-    }
+    },
+    "start_command": {
+      "Windows": ".\\SCUM\\Binaries\\Win64\\SCUMServer.exe -Port=7777 -QueryPort=27015 -MaxPlayers=32 -log"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "survival"
   },
   "Rust": {
     "game_nameCN": "腐蚀",
@@ -65,7 +80,16 @@
       "京东云": {
         "https://images.xiaozhuhouses.asia:3000/i/2025/09/26/dqv8ii.png": "https://www.jdcloud.com/cn/pages/gamecenter?utm_source=cpscf&type=1&channelReferrer=3578775033284104&channelCode=JD_YTKQDFX"
       }
-    }
+    },
+    "start_command": {
+      "Windows": ".\\RustDedicated.exe -batchmode +server.port 28015 +server.level \"Procedural Map\" +server.maxplayers 50 +server.hostname \"My Rust Server\"",
+      "Linux": "./RustDedicated -batchmode +server.port 28015 +server.level \"Procedural Map\" +server.maxplayers 50 +server.hostname \"My Rust Server\""
+    },
+    "versions": [
+      "public",
+      "staging"
+    ],
+    "category": "survival"
   },
   "Satisfactory": {
     "game_nameCN": "幸福工厂",
@@ -93,7 +117,16 @@
         "port": 8888,
         "protocol": "tcp"
       }
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\\FactoryServer.exe -log -unattended",
+      "Linux": "./FactoryServer.sh -log -unattended"
+    },
+    "versions": [
+      "public",
+      "experimental"
+    ],
+    "category": "simulation"
   },
   "L4D2": {
     "game_nameCN": "求生之路2",
@@ -104,7 +137,15 @@
     "system": [
       "Windows",
       "Linux"
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game left4dead2 -console -usercon +port 27015 +map c1m1_hotel +maxplayers 8",
+      "Linux": "./srcds_run -game left4dead2 -console -usercon +port 27015 +map c1m1_hotel +maxplayers 8"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "shooter"
   },
   "7_Days_to_Die": {
     "game_nameCN": "七日杀",
@@ -129,7 +170,16 @@
         "port": 26900,
         "protocol": "tcp/udp"
       }
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\u0007DaysToDieServer.exe -configfile=serverconfig.xml -logfile=7days.log -quit -batchmode -nographics -dedicated",
+      "Linux": "./7DaysToDieServer.x86_64 -configfile=serverconfig.xml -logfile=7days.log -quit -batchmode -nographics -dedicated"
+    },
+    "versions": [
+      "public",
+      "latest_experimental"
+    ],
+    "category": "survival"
   },
   "Unturned": {
     "game_nameCN": "未转变者",
@@ -164,7 +214,15 @@
     "tip": "请注意此服务端需要从客户端上传存档以及配置文件，需要自行编写启动脚本，详见文章https://www.bilibili.com/opus/798802812813180931",
     "image": "https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/322330/22aa99418c3e4337aa023bd43ea3d9fe1cdc34e4/header_schinese.jpg",
     "url": "https://store.steampowered.com/app/322330/_/",
-    "docs": "https://docs.gsm.xiaozhuhouses.asia/%E6%B8%B8%E6%88%8F%E7%99%BE%E7%A7%91/Steam/%E9%A5%A5%E8%8D%92%E9%A3%9F%E7%94%A8%E8%AF%B4%E6%98%8E.html"
+    "docs": "https://docs.gsm.xiaozhuhouses.asia/%E6%B8%B8%E6%88%8F%E7%99%BE%E7%A7%91/Steam/%E9%A5%A5%E8%8D%92%E9%A3%9F%E7%94%A8%E8%AF%B4%E6%98%8E.html",
+    "start_command": {
+      "Windows": ".\\dontstarve_dedicated_server_nullrenderer.exe -console -cluster \"MyCluster\" -shard \"Master\"",
+      "Linux": "./dontstarve_dedicated_server_nullrenderer -console -cluster \"MyCluster\" -shard \"Master\""
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "survival"
   },
   "Terraria": {
     "game_nameCN": "泰拉瑞亚",
@@ -214,14 +272,32 @@
         "port": 16262,
         "protocol": "tcp/udp"
       }
-    ]
+    ],
+    "start_command": {
+      "Windows": "start_server64.bat",
+      "Linux": "./start-server.sh"
+    },
+    "versions": [
+      "public",
+      "beta"
+    ],
+    "category": "survival"
   },
   "Valheim": {
     "game_nameCN": "英灵神殿",
     "appid": "896660",
     "tip": "游戏端口：2457 UDP，配置文件位置：位于启动脚本中，存档位置：位于映射的通用游戏存档路径1目录中，",
     "image": "https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/892970/header_schinese.jpg",
-    "url": "https://store.steampowered.com/app/892970/Valheim/"
+    "url": "https://store.steampowered.com/app/892970/Valheim/",
+    "start_command": {
+      "Windows": ".\u000balheim_server.exe -nographics -batchmode -name \"MyServer\" -port 2456 -world \"World\" -password \"secret\"",
+      "Linux": "./valheim_server.x86_64 -nographics -batchmode -name \"MyServer\" -port 2456 -world \"World\" -password \"secret\""
+    },
+    "versions": [
+      "public",
+      "public-test"
+    ],
+    "category": "survival"
   },
   "Team_Fortress_2": {
     "game_nameCN": "军团要塞2",
@@ -247,7 +323,15 @@
         "port": 27015,
         "protocol": "udp"
       }
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game tf -console -usercon +port 27015 +map cp_badlands +maxplayers 24",
+      "Linux": "./srcds_run -game tf -console -usercon +port 27015 +map cp_badlands +maxplayers 24"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "shooter"
   },
   "Insurgency_Sandstorm": {
     "game_nameCN": "叛乱：沙漠风暴",
@@ -308,7 +392,15 @@
     "system": [
       "Windows",
       "Linux"
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\\SquadGameServer.bat",
+      "Linux": "./SquadGameServer.sh"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "shooter"
   },
   "Insurgency_2014": {
     "game_nameCN": "叛乱2",
@@ -354,7 +446,16 @@
     "appid": "739590",
     "tip": "游戏端口：3001 TCP 3000 UDP，配置文件位置：Configs，存档位置：container/Storage，温馨提示：此服务端需要自行从客户端生成配置文件上传才可以开服；Windows需要手动在GUI上登陆账号。",
     "image": "https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/382310/header.jpg",
-    "url": "https://store.steampowered.com/app/382310/ECO/"
+    "url": "https://store.steampowered.com/app/382310/ECO/",
+    "start_command": {
+      "Windows": ".\\EcoServer.exe -nogui",
+      "Linux": "./EcoServer -nogui"
+    },
+    "versions": [
+      "public",
+      "experimental"
+    ],
+    "category": "simulation"
   },
   "Soulmask_Linux": {
     "game_nameCN": "灵魂面甲Linux",
@@ -608,7 +709,16 @@
     "url": "https://store.steampowered.com/app/221100/DayZ/",
     "system": [
       "Windows"
-    ]
+    ],
+    "start_command": {
+      "Windows": ".\\DayZServer_x64.exe -config=serverDZ.cfg -port=2302 -profiles=profile",
+      "Linux": "./DayZServer_x64 -config=serverDZ.cfg -port=2302 -profiles=profile"
+    },
+    "versions": [
+      "public",
+      "experimental"
+    ],
+    "category": "survival"
   },
   "Necesse": {
     "game_nameCN": "奈斯启示录",
@@ -859,5 +969,52 @@
     "system": [
       "Windows"
     ]
+  },
+  "Lethal_Company": {
+    "game_nameCN": "致命公司",
+    "appid": 1966720,
+    "tip": "需要安装SteamCMD并登录",
+    "image": "",
+    "url": "https://store.steampowered.com/app/1966720",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\LethalCompany.exe -batchmode -nographics -port 7777"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "horror",
+    "memory": 2
+  },
+  "Core_Keeper": {
+    "game_nameCN": "核心守护者",
+    "appid": 2865170,
+    "tip": "专用服务端需SteamCMD下载",
+    "image": "",
+    "url": "https://store.steampowered.com/app/2865170",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\CoreKeeperServer.exe -batchmode -nographics -world \"MyWorld\"",
+      "Linux": "./CoreKeeperServer -batchmode -nographics -world \"MyWorld\""
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "survival",
+    "memory": 4
+  },
+  "Sons_Of_The_Forest": {
+    "start_command": {
+      "Windows": ".\\SonsOfTheForestDS.exe -userdatafolder .\\saves -dedicated -batchmode"
+    },
+    "versions": [
+      "public"
+    ],
+    "category": "survival"
   }
 }

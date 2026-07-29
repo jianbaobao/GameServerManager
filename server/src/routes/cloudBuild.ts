@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import axios from 'axios'
 import { authenticateToken } from '../middleware/auth.js'
+import { isPrivateHost, extractHost } from '../utils/networkSecurity.js'
 import path from 'path'
 import fs from 'fs-extra'
 import { pipeline } from 'stream/promises'
@@ -346,8 +347,19 @@ router.post('/download', authenticateToken, async (req, res) => {
         message: '缺少必要参数：downloadUrl 和 targetPath'
       })
     }
+    // Path sandbox
+    const resolvedTargetPath = path.resolve(targetPath)
+    const allowedBase = path.resolve(process.cwd(), 'data')
+    if (!resolvedTargetPath.startsWith(allowedBase + path.sep) && resolvedTargetPath !== allowedBase) {
+      return res.status(403).json({ success: false, message: 'Target path outside allowed directory' })
+    }
 
     const finalDownloadUrl = resolveDownloadUrl(downloadUrl)
+    // SSRF protection
+    const dlHost = extractHost(finalDownloadUrl)
+    if (dlHost && isPrivateHost(dlHost)) {
+      return res.status(403).json({ success: false, error: 'Download from internal addresses is not allowed' })
+    }
     const tempDir = getCloudBuildTempDir()
     const finalArchiveFileName = getArchiveFileName(finalDownloadUrl, archiveFileName)
 
