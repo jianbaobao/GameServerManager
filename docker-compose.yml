@@ -6,7 +6,7 @@ services:
   management_panel:
     build: .
     container_name: GSManager3
-    image: xiaozhu674/gameservermanager:latest
+    image: jianbaobao-gameservermanager:latest
     user: root                       
     ports:
       # GSM3管理面板端口
