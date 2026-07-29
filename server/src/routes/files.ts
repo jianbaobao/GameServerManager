@@ -2965,7 +2965,14 @@ router.post('/ownership', authenticateToken, async (req: Request, res: Response)
       })
     }
 
-    // 构建chown命令
+    // Build chown command with validation
+    const validName = /^[a-zA-Z0-9_.-]+$/
+    if (owner && !validName.test(owner)) {
+      return res.status(400).json({ success: false, message: 'Invalid owner name' })
+    }
+    if (group && !validName.test(group)) {
+      return res.status(400).json({ success: false, message: 'Invalid group name' })
+    }
     let ownerGroup = ''
     if (owner && group) {
       ownerGroup = `${owner}:${group}`
