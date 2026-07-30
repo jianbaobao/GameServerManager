@@ -770,8 +770,11 @@ router.post('/network/select', authenticateToken, async (req: Request, res: Resp
     if (typeof interfaceName !== 'string') {
       return res.status(400).json({
         success: false,
-        error: '网络接口参数必须是字符串'
+        error: 'Invalid interface parameter'
       })
+    }
+    if (/[^a-zA-Z0-9_\-.]/.test(interfaceName)) {
+      return res.status(400).json({ success: false, error: 'Invalid interface name' })
     }
 
     systemManager.setSelectedNetworkInterface(interfaceName)
