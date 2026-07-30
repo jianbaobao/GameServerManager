@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'child_process'
+import { spawn, ChildProcess, exec, execFile } from 'child_process'
 import { Server as SocketIOServer, Socket } from 'socket.io'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
@@ -8,7 +8,6 @@ import { promises as fsPromises } from 'fs'
 import { fileURLToPath } from 'url'
 import os from 'os'
 import { promisify } from 'util'
-import { exec, execFile } from 'child_process'
 import { TerminalSessionManager, PersistedTerminalSession } from './TerminalSessionManager.js'
 import { ConfigManager } from '../config/ConfigManager.js'
 import { ptyManager } from '../../utils/ptyManager.js'
@@ -61,6 +60,12 @@ interface TerminalResizeData {
 }
 
 export class TerminalManager {
+  // Sanitize path to prevent command injection
+  private sanitizePath(p: string): string {
+    return p.replace(/[$`;|&()\n\r]/g, '')
+  }
+
+
   private sessions: Map<string, PtySession> = new Map()
   private io: SocketIOServer
   private logger: winston.Logger
@@ -230,7 +235,7 @@ export class TerminalManager {
                 'env',
                 ...shellLocaleEnvArgs,
                 '/bin/bash', '-c',
-                `cd "${workingDirectory}" && exec /bin/bash --login`
+                `cd "${this.sanitizePath(workingDirectory)}" && exec /bin/bash --login`
               ]))
               this.logger.info(`使用sudo切换到默认用户启动终端: ${defaultUser}，工作目录: ${workingDirectory}`)
             } else {
@@ -242,7 +247,7 @@ export class TerminalManager {
                 args.push('-cmd', JSON.stringify([
                   'su', defaultUser, '-c', 
                   `${shellLocaleExport}; ` +
-                  `cd "${workingDirectory}" && exec /bin/bash --login`
+                  `cd "${this.sanitizePath(workingDirectory)}" && exec /bin/bash --login`
                 ]))
                 this.logger.info(`使用su切换到默认用户启动终端: ${defaultUser}，工作目录: ${workingDirectory}`)
               } else {
