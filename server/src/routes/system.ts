@@ -690,8 +690,12 @@ router.post('/disk/select', authenticateToken, async (req: Request, res: Respons
     if (typeof disk !== 'string') {
       return res.status(400).json({
         success: false,
-        error: '磁盘参数必须是字符串'
+        error: 'Invalid disk parameter'
       })
+    }
+    // Validate to prevent command injection
+    if (/[^a-zA-Z0-9_:\/.-]/.test(disk)) {
+      return res.status(400).json({ success: false, error: 'Invalid disk identifier' })
     }
 
     systemManager.setSelectedDisk(disk)
