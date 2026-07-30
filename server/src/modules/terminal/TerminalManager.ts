@@ -8,7 +8,7 @@ import { promises as fsPromises } from 'fs'
 import { fileURLToPath } from 'url'
 import os from 'os'
 import { promisify } from 'util'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 import { TerminalSessionManager, PersistedTerminalSession } from './TerminalSessionManager.js'
 import { ConfigManager } from '../config/ConfigManager.js'
 import { ptyManager } from '../../utils/ptyManager.js'
@@ -1450,8 +1450,12 @@ export class TerminalManager {
    * 检查Linux用户是否存在
    */
   private async checkUserExists(username: string): Promise<boolean> {
+    // Validate username to prevent command injection
+    if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+      return false
+    }
     try {
-      // 在Linux系统中使用id命令检查用户是否存在
+      // Check if user exists on Linux using id command
       if (os.platform() !== 'linux') {
         return false
       }
