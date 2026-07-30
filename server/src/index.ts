@@ -10,6 +10,7 @@ import os from 'os'
 import { fileURLToPath } from 'url'
 import winston from 'winston'
 import { promises as fs } from 'fs'
+import { statSync } from 'node:fs'
 
 import { TerminalManager } from './modules/terminal/TerminalManager.js'
 import { GameManager } from './modules/game/GameManager.js'
@@ -128,7 +129,7 @@ const publicPaths = [
   path.join(__dirname, '../../../client/dist'),
 ]
 for (const pp of publicPaths) {
-  try { if (require("fs").statSync(pp).isDirectory()) {
+  try { if (statSync(pp).isDirectory()) {
     app.use('/static', express.static(pp))
     app.use(express.static(pp))
     break
@@ -165,7 +166,7 @@ app.get('/', (req, res) => {
     path.join(__dirname, '../../client/dist/index.html'),
   ]
   for (const ip of idxPaths) {
-    try { if (require('fs').statSync(ip).isFile()) { return res.sendFile(ip) } } catch {}
+    try { if (statSync(ip).isFile()) { return res.sendFile(ip) } } catch {}
   }
   res.json({
     name: 'GSM3 Server',
@@ -800,7 +801,7 @@ app.use('/api/ai', aiRouter)
   ]
   let sent = false
   for (const ip of indexPaths) {
-    try { if (require("fs").statSync(ip).isFile()) { res.sendFile(ip); sent = true; break } } catch {}
+    try { if (statSync(ip).isFile()) { res.sendFile(ip); sent = true; break } } catch {}
   }
   if (!sent) res.status(404).json({ error: 'Frontend not built' })
       }
