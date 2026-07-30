@@ -156,7 +156,7 @@ const isValidPath = (filePath: string): boolean => {
   }
 
   // Reject shell metacharacters to prevent command injection in exec/spawn
-  if (/[$`;|&()]/.test(normalizedPath)) {
+  if (/[$`;|&()\n\r]/.test(normalizedPath)) {
     return false
   }
 
