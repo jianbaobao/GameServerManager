@@ -229,7 +229,7 @@ async function getLocalStartCommandForGame(gameKey: string): Promise<string | nu
 
 function normalizeSteamCMDArguments(command: string): string {
   // Reject shell metacharacters to prevent command injection
-  if (/[\$;&|()]/.test(command)) {
+  if (/[\$;&|()`]/.test(command)) {
     throw new Error('SteamCMD arguments contain invalid shell metacharacters')
   }
   return command
