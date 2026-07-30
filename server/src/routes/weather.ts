@@ -1,15 +1,16 @@
 import { Router } from 'express'
+import { authenticateToken } from '../middleware/auth.js'
 import axios from 'axios'
 
 const router = Router()
 
 // 获取天气信息
-router.get('/current', async (req, res) => {
+router.get('/current', authenticateToken, async (req, res) => {
   try {
     const { city = '101010100' } = req.query // 默认北京，支持前端传递城市代码
     
     // 使用备用的天气API
-    const response = await axios.get(`http://t.weather.sojson.com/api/weather/city/${city}`, {
+    const response = await axios.get(`https://t.weather.sojson.com/api/weather/city/${city}`, {
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
