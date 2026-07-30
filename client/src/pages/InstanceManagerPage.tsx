@@ -114,7 +114,9 @@ const InstanceManagerPage: React.FC = () => {
     programPath: '',
     terminalUser: '',
     instanceType: 'generic',
-    javaVersion: ''
+    javaVersion: '',
+    gameKey: '',
+    gameVersion: ''
   })
   const [javaEnvironments, setJavaEnvironments] = useState<any[]>([])
   const [loadingJava, setLoadingJava] = useState(false)

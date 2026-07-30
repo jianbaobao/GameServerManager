@@ -4,6 +4,7 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import socketClient from '@/utils/socket'
+import AIChatPanel from '@/components/ai/AIChatPanel'
 import apiClient from '@/utils/api'
 import { useNotificationStore } from '@/stores/notificationStore'
 import {
