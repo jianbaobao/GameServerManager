@@ -8,7 +8,7 @@ import archiver from 'archiver'
 import * as tar from 'tar'
 import * as zlib from 'zlib'
 import mime from 'mime-types'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 import { promisify } from 'util'
 import jschardet from 'jschardet'
 import iconv from 'iconv-lite'
@@ -21,6 +21,7 @@ import { createTarSecurityFilter } from '../utils/tarSecurityFilter.js'
 import { zipToolsManager } from '../utils/zipToolsManager.js'
 
 const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 const router = Router()
 
@@ -2985,11 +2986,8 @@ router.post('/ownership', authenticateToken, async (req: Request, res: Response)
       ownerGroup = `:${group}`
     }
 
-    const chownCommand = recursive
-      ? `chown -R ${ownerGroup} "${fixedFilePath}"`
-      : `chown ${ownerGroup} "${fixedFilePath}"`
-
-    await execAsync(chownCommand)
+    const chownCommand = recursive ? ['chown', '-R', ownerGroup, fixedFilePath] : ['chown', ownerGroup, fixedFilePath]
+    await execFile(chownCommand[0], chownCommand.slice(1))
 
     res.json({
       status: 'success',

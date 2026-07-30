@@ -108,7 +108,18 @@ server.on('connection', socket => {
 
 // 中间件配置
 app.use(helmet({
-  contentSecurityPolicy: false, // 开发环境下禁用CSP
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+    }
+  }, // 开发环境下禁用CSP
   crossOriginOpenerPolicy: false // 禁用Cross-Origin-Opener-Policy
 }))
 
