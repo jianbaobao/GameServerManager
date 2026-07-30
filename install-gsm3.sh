@@ -106,6 +106,7 @@ cd "$install_path"
 
 # GitHub 下载镜像源列表（自动回退）
 GITHUB_MIRRORS=(
+  "https://gh.api.99988866.xyz/https://github.com"
   "https://ghfast.top/https://github.com"
   "https://ghproxy.net/https://github.com"
   "https://ghproxy.com/https://github.com"
