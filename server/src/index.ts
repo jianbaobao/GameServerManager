@@ -121,9 +121,19 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// 静态文件服务
-app.use('/static', express.static(path.join(__dirname, '../public')))
-app.use(express.static(path.join(__dirname, '../public')))
+// 静态文件服务 - 支持多个路径
+const publicPaths = [
+  path.join(__dirname, '../public'),
+  path.join(__dirname, '../../client/dist'),
+  path.join(__dirname, '../../../client/dist'),
+]
+for (const pp of publicPaths) {
+  try { if (require("fs").statSync(pp).isDirectory()) {
+    app.use('/static', express.static(pp))
+    app.use(express.static(pp))
+    break
+  } } catch {}
+}
 
 // 管理器变量声明
 let configManager: ConfigManager
@@ -776,7 +786,16 @@ app.use('/api/ai', aiRouter)
         })
       } else {
         // 其他请求返回前端页面
-        res.sendFile(path.join(__dirname, '../public/index.html'))
+        const indexPaths = [
+    path.join(__dirname, '../public/index.html'),
+    path.join(__dirname, '../../client/dist/index.html'),
+    path.join(__dirname, '../../../client/dist/index.html'),
+  ]
+  let sent = false
+  for (const ip of indexPaths) {
+    try { if (require("fs").statSync(ip).isFile()) { res.sendFile(ip); sent = true; break } } catch {}
+  }
+  if (!sent) res.status(404).json({ error: 'Frontend not built' })
       }
     })
 

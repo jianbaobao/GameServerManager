@@ -885,4 +885,37 @@ router.get('/steam-version/:appId', authenticateToken, async (req: Request, res:
 })
 
 
+
+// Search games from Steam store (no API key needed)
+router.get('/steam-search', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { q } = req.query
+    if (!q || typeof q !== 'string' || q.trim().length < 2) {
+      return res.status(400).json({ success: false, error: '请输入至少2个字符的搜索关键词' })
+    }
+    // Search via Steam store
+    const searchUrl = `https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(q)}&l=schinese&cc=cn`
+    const resp = await fetch(searchUrl)
+    const data: any = await resp.json()
+    if (data?.items) {
+      const games = data.items
+        .filter((item: any) => item.type === 'app' || item.type === 'game')
+        .map((item: any) => ({
+          appId: item.id,
+          name: item.name,
+          price: item.price?.final_formatted || (item.is_free ? 'Free' : 'N/A'),
+          image: `https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/\${item.id}/header.jpg`,
+          url: `https://store.steampowered.com/app/\${item.id}`,
+          platform: item.platforms || { windows: true, linux: false, mac: false }
+        }))
+      return res.json({ success: true, data: games, total: data.total })
+    }
+    res.json({ success: true, data: [], total: 0 })
+  } catch (error: any) {
+    logger.error('Steam search failed:', error)
+    res.status(500).json({ success: false, error: '搜索失败', message: error.message })
+  }
+})
+
+
 export default router
