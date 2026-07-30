@@ -791,7 +791,12 @@ router.post('/install', authenticateToken, async (req: Request, res: Response) =
       })
     }
 
-    const steamcmdArgs = normalizeSteamCMDArguments(steamcmdCommand)
+    let steamcmdArgs: string
+    try {
+      steamcmdArgs = normalizeSteamCMDArguments(steamcmdCommand)
+    } catch (err: any) {
+      return res.status(400).json({ success: false, error: err.message })
+    }
     if (!steamcmdArgs) {
       return res.status(400).json({
         success: false,
