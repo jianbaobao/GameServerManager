@@ -135,6 +135,18 @@ for (const pp of publicPaths) {
     break
   } } catch {}
 }
+// Fallback: hardcoded paths for packaged deployment
+const fallbackPaths = [
+  path.join(__dirname, 'public'),
+  '/opt/gsm3/server/public',
+  '/opt/gsm3/public',
+]
+for (const fp of fallbackPaths) {
+  try { if (statSync(fp).isDirectory()) {
+    app.use(express.static(fp))
+    break
+  } } catch {}
+}
 
 // 管理器变量声明
 let configManager: ConfigManager
