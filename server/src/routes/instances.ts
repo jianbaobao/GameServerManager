@@ -904,8 +904,8 @@ router.get('/steam-search', authenticateToken, async (req: Request, res: Respons
           appId: item.id,
           name: item.name,
           price: item.price?.final_formatted || (item.is_free ? 'Free' : 'N/A'),
-          image: `https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/\${item.id}/header.jpg`,
-          url: `https://store.steampowered.com/app/\${item.id}`,
+          image: `https://steamcdn-a.akamaihd.net/steam/apps/${item.id}/header.jpg`,
+          url: `https://store.steampowered.com/app/${item.id}`,
           platform: item.platforms || { windows: true, linux: false, mac: false }
         }))
       return res.json({ success: true, data: games, total: data.total })
