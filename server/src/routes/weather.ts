@@ -7,9 +7,12 @@ const router = Router()
 // 获取天气信息
 router.get('/current', authenticateToken, async (req, res) => {
   try {
-    const { city = '101010100' } = req.query // 默认北京，支持前端传递城市代码
+    const { city = '101010100' } = req.query
+    // SSRF protection: validate city code is numeric
+    if (typeof city !== 'string' || !/^\d{9}$/.test(city)) {
+      return res.status(400).json({ success: false, message: 'Invalid city code' })
+    }
     
-    // 使用备用的天气API
     const response = await axios.get(`https://t.weather.sojson.com/api/weather/city/${city}`, {
       timeout: 10000,
       headers: {
