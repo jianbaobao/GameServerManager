@@ -155,6 +155,11 @@ const isValidPath = (filePath: string): boolean => {
     if (devName.test(path.basename(normalizedPath))) return false
   }
 
+  // Reject shell metacharacters to prevent command injection in exec/spawn
+  if (/[$`;|&()]/.test(normalizedPath)) {
+    return false
+  }
+
   // Resolve full path and verify it's inside allowed directories
   const resolvedPath = path.isAbsolute(normalizedPath)
     ? normalizedPath
