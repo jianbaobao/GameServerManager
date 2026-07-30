@@ -160,6 +160,13 @@ app.get('/api/health', (req, res) => {
 
 // 根路径
 app.get('/', (req, res) => {
+  const idxPaths = [
+    path.join(__dirname, '../public/index.html'),
+    path.join(__dirname, '../../client/dist/index.html'),
+  ]
+  for (const ip of idxPaths) {
+    try { if (require('fs').statSync(ip).isFile()) { return res.sendFile(ip) } } catch {}
+  }
   res.json({
     name: 'GSM3 Server',
     version: '1.0.0',
