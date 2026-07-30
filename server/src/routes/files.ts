@@ -928,8 +928,6 @@ router.post('/rename', authenticateToken, async (req: Request, res: Response) =>
 
     // 添加调试日志
     console.log('重命名请求:', { oldPath, newPath })
-    console.log('oldPath验证:', isValidPath(oldPath))
-    console.log('newPath验证:', isValidPath(newPath))
 
     if (!oldPath || !newPath) {
       return res.status(400).json({
