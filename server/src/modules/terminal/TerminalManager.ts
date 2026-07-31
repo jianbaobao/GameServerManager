@@ -1494,8 +1494,7 @@ export class TerminalManager {
       }
 
       // 使用chmod命令递归设置权限为777
-      const chmodCommand = `chmod -R 777 "${directoryPath}"`
-      await execAsync(chmodCommand)
+      await execFile('chmod', ['-R', '777', this.sanitizePath(directoryPath)])
 
       this.logger.info(`已递归设置目录权限为777: ${directoryPath}`)
     } catch (error) {
