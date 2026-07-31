@@ -2911,12 +2911,9 @@ router.post('/permissions', authenticateToken, async (req: Request, res: Respons
       })
     }
 
-    // 构建chmod命令
-    const chmodCommand = recursive
-      ? `chmod -R ${octalPermissions} "${fixedFilePath}"`
-      : `chmod ${octalPermissions} "${fixedFilePath}"`
-
-    await execAsync(chmodCommand)
+    // Build chmod command - use execFile to prevent injection
+    const chmodArgs = recursive ? ['-R', octalPermissions, fixedFilePath] : [octalPermissions, fixedFilePath]
+    await execFileAsync('chmod', chmodArgs)
 
     res.json({
       status: 'success',
@@ -2987,7 +2984,7 @@ router.post('/ownership', authenticateToken, async (req: Request, res: Response)
     }
 
     const chownCommand = recursive ? ['chown', '-R', ownerGroup, fixedFilePath] : ['chown', ownerGroup, fixedFilePath]
-    await execFile(chownCommand[0], chownCommand.slice(1))
+    await execFileAsync(chownCommand[0], chownCommand.slice(1))
 
     res.json({
       status: 'success',
