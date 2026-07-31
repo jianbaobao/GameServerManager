@@ -2806,7 +2806,7 @@ router.get('/permissions', authenticateToken, async (req: Request, res: Response
     const stats = await fs.stat(fixedFilePath)
 
     // 获取详细的权限信息
-    const { stdout } = await execAsync(`stat -c "%a %U %G" "${fixedFilePath}"`)
+    const { stdout } = await execFileAsync('stat', ['-c', '%a %U %G', fixedFilePath])
     const [octalPermissions, owner, group] = stdout.trim().split(' ')
 
     // 将八进制权限转换为布尔值格式
