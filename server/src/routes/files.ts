@@ -2967,7 +2967,7 @@ router.post('/ownership', authenticateToken, async (req: Request, res: Response)
     }
 
     // Build chown command with validation
-    const validName = /^[a-zA-Z0-9_.-]+$/
+    const validName = /^[a-zA-Z0-9_.][a-zA-Z0-9_.-]*$/
     if (owner && !validName.test(owner)) {
       return res.status(400).json({ success: false, message: 'Invalid owner name' })
     }
@@ -2983,7 +2983,7 @@ router.post('/ownership', authenticateToken, async (req: Request, res: Response)
       ownerGroup = `:${group}`
     }
 
-    const chownCommand = recursive ? ['chown', '-R', ownerGroup, fixedFilePath] : ['chown', ownerGroup, fixedFilePath]
+    const chownCommand = recursive ? ['chown', '-hR', ownerGroup, fixedFilePath] : ['chown', ownerGroup, fixedFilePath]
     await execFileAsync(chownCommand[0], chownCommand.slice(1))
 
     res.json({
