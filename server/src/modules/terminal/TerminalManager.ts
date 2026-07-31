@@ -62,7 +62,7 @@ interface TerminalResizeData {
 export class TerminalManager {
   // Sanitize path to prevent command injection
   private sanitizePath(p: string): string {
-    return p.replace(/[$`;|&()\n\r]/g, '')
+    return p.replace(/[$`;|&()\n\r"'\\]/g, '')
   }
 
 
