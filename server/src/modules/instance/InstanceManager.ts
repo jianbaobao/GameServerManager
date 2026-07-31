@@ -4,11 +4,12 @@ import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { TerminalManager } from '../terminal/TerminalManager.js'
 import os from 'os'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 import { promisify } from 'util'
 import { JavaManager } from '../environment/javaManager.js'
 
 const execAsync = promisify(exec)
+const execFileAsync = promisify(execFile)
 
 export type InstanceType = 'generic' | 'minecraft-java' | 'minecraft-bedrock'
 
@@ -554,7 +555,7 @@ export class InstanceManager extends EventEmitter {
           
           // 添加可执行权限
           this.logger.info(`为文件添加可执行权限: ${fullPath}`)
-          await execAsync(`chmod +x "${fullPath}"`)
+          await execFileAsync('chmod', ['+x', fullPath])
           this.logger.info(`已为 ${scriptPath} 添加可执行权限`)
         } catch (error: any) {
           if (error.code === 'ENOENT') {
