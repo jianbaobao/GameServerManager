@@ -150,3 +150,8 @@ src/public/1.png
 参考文件/
 .报错.txt
 node-v22.17.0-linux-x64.tar.xz
+
+# Environment files
+.env
+server/.env
+client/.env
