@@ -155,3 +155,7 @@ node-v22.17.0-linux-x64.tar.xz
 .env
 server/.env
 client/.env
+
+# Runtime data
+server/data/rcon/
+server/data/.last_startup
