@@ -690,23 +690,22 @@ async function startServer() {
     schedulerManager.setInstanceManager(instanceManager)
     schedulerManager.setTerminalManager(terminalManager)
 
-    // 检测并下载 Zip-Tools
-    try {
-      await zipToolsManager.ensureInstalled()
-      logger.info('Zip-Tools 已就绪')
-    } catch (error: any) {
-      logger.warn(`Zip-Tools 下载失败，ZIP 相关功能可能不可用: ${error.message || error}`)
-      // 不阻塞启动
+    // 检测并下载 Zip-Tools / 7z（后台异步执行，不阻塞服务器启动）
+    const backgroundInit = async () => {
+      try {
+        await zipToolsManager.ensureInstalled()
+        logger.info('Zip-Tools 已就绪')
+      } catch (error: any) {
+        logger.warn(`Zip-Tools 下载失败，ZIP 相关功能可能不可用: ${error.message || error}`)
+      }
+      try {
+        await zipToolsManager.ensure7zInstalled()
+        logger.info('7z 已就绪')
+      } catch (error: any) {
+        logger.warn(`7z 下载失败，7z 相关功能可能不可用: ${error.message || error}`)
+      }
     }
-
-    // 检测并下载 7z
-    try {
-      await zipToolsManager.ensure7zInstalled()
-      logger.info('7z 已就绪')
-    } catch (error: any) {
-      logger.warn(`7z 下载失败，7z 相关功能可能不可用: ${error.message || error}`)
-      // 不阻塞启动
-    }
+    backgroundInit()
 
     // 设置路由
     app.use('/api/auth', setupAuthRoutes(authManager))
