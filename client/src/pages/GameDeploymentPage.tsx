@@ -217,6 +217,9 @@ const GameDeploymentPage: React.FC = () => {
   const [useAnonymous, setUseAnonymous] = useState(true)
   const [steamUsername, setSteamUsername] = useState('')
   const [gameVersion, setGameVersion] = useState('')
+  const [steamVersions, setSteamVersions] = useState<string[]>([])
+  const [steamVersionLoading, setSteamVersionLoading] = useState(false)
+  const [steamBuildId, setSteamBuildId] = useState('')
   const [steamPassword, setSteamPassword] = useState('')
   const [validateGameIntegrity, setValidateGameIntegrity] = useState(false)
   
@@ -2616,6 +2619,32 @@ const GameDeploymentPage: React.FC = () => {
       setSteamcmdCommand(fullCommand)
     }
   }, [showInstallModal, selectedGame, useAnonymous, steamUsername, steamPassword, gameVersion, validateGameIntegrity, installPath])
+
+  // Load Steam version info when install modal opens
+  useEffect(() => {
+    if (showInstallModal && selectedGame?.info?.appid) {
+      const appId = String(selectedGame.info.appid)
+      setSteamVersionLoading(true)
+      setGameVersion('')
+      setSteamBuildId('')
+      apiClient.get(`/api/instances/steam-version/${appId}`)
+        .then((res: any) => {
+          if (res.success && res.data) {
+            setSteamVersions(Array.isArray(res.data.versions) ? res.data.versions : [])
+            setSteamBuildId(res.data.currentBuildId || '')
+            // Auto-select first version if only one available
+            if (Array.isArray(res.data.versions) && res.data.versions.length === 1) {
+              setGameVersion(res.data.versions[0])
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('获取Steam版本信息失败:', err)
+          setSteamVersions([])
+        })
+        .finally(() => setSteamVersionLoading(false))
+    }
+  }, [showInstallModal, selectedGame?.info?.appid])
 
   // 打开安装对话框
   const handleInstallGame = async (gameKey: string, gameInfo: GameInfo) => {
@@ -5998,7 +6027,13 @@ const GameDeploymentPage: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">默认版本（最新公开版）</option>
-                    {Array.isArray(selectedGame.info.versions) && selectedGame.info.versions.length > 0 ? (
+                    {steamVersionLoading ? (
+                      <option value="" disabled>正在从 Steam 获取版本...</option>
+                    ) : steamVersions.length > 0 ? (
+                      steamVersions.map((v: string) => (
+                        <option key={v} value={v}>{v === 'public' ? 'public（正式版）' : v}</option>
+                      ))
+                    ) : Array.isArray(selectedGame.info.versions) && selectedGame.info.versions.length > 0 ? (
                       selectedGame.info.versions.map((v: string) => (
                         <option key={v} value={v}>{v}</option>
                       ))
@@ -6011,7 +6046,10 @@ const GameDeploymentPage: React.FC = () => {
                     )}
                   </select>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    选择 Steam 分支版本。例如：幻兽帕鲁默认 public，测试版为 experimental。选择后会自动追加 -beta 参数。
+                    {steamBuildId && steamVersions.length > 0 ? (
+                      <>当前 Steam 版本号（buildid）: <strong className="text-gray-700 dark:text-gray-200">{steamBuildId}</strong> · </>
+                    ) : null}
+                    选择 Steam 分支版本，选择后自动追加 -beta 参数。
                   </p>
                 </div>
               </div>
