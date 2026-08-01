@@ -85,7 +85,8 @@ export class AuthManager {
       this.logger.info(`加载了 ${users.length} 个用户`)
     } catch (error: any) {
       if (error.code === 'ENOENT') {
-        this.logger.info('用户文件不存在，将创建新文件')
+        this.logger.info('用户文件不存在，将创建默认管理员账户')
+        await this.createDefaultAdmin()
       } else {
         this.logger.error('加载用户文件失败:', error)
         throw error
