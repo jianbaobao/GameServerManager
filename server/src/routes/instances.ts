@@ -845,39 +845,100 @@ router.get('/steam-version/:appId', authenticateToken, async (req: Request, res:
     if (!appId || !/^\d+$/.test(appId)) {
       return res.status(400).json({ success: false, error: '无效的 AppID' })
     }
-    // Try Steam Web API for depot/version info
+    // Fetch real-time version info from Steam store API (no key needed)
+    let storeData: any = null
+    try {
+      const storeResp = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appId}&l=schinese`, {
+        headers: { 'User-Agent': 'GSM3/1.0' }
+      })
+      const storeJson: any = await storeResp.json()
+      if (storeJson[appId]?.success) {
+        const d = storeJson[appId].data
+        storeData = {
+          name: d.name,
+          type: d.type,
+          releaseDate: d.release_date?.date,
+          comingSoon: d.release_date?.coming_soon,
+          buildid: d.buildid || '',
+          isFree: d.is_free,
+          headerImage: d.header_image,
+          shortDescription: d.short_description
+        }
+      }
+    } catch (err) {
+      logger.warn('Steam store API request failed:', err)
+    }
+
+    // Try Steam Web API for build number if key is configured
+    let buildData: any = null
     const steamApiKey = process.env.STEAM_API_KEY || ''
     if (steamApiKey) {
-      // Steam API: Get product info
-      const apiUrl = `https://api.steampowered.com/ISteamApps/GetAppBuildNumber/v1/?appid=${appId}&key=${steamApiKey}`
       try {
+        const apiUrl = `https://api.steampowered.com/ISteamApps/GetAppBuildNumber/v1/?appid=${appId}&key=${steamApiKey}`
         const response = await fetch(apiUrl)
         const data = await response.json()
-        return res.json({ success: true, data: { appId, steamData: data, source: 'steam_api' } })
+        buildData = data
       } catch (err) {
         logger.warn('Steam API request failed:', err)
       }
     }
-    // Fallback: return basic info from local config
+
+    // Common Steam branches for popular dedicated servers
+    const commonBranches: Record<string, string[]> = {
+      '2394010': ['public', 'experimental'],
+      '252490': ['public', 'staging'],
+      '294420': ['public', 'staging'],
+      '346110': ['public', 'beta'],
+      '108600': ['public', 'beta'],
+      '285720': ['public', 'latest_experimental'],
+      '892970': ['public', 'beta'],
+      '427730': ['public', 'beta'],
+      '294850': ['public', 'beta'],
+      '413150': ['public', 'beta'],
+      '648800': ['public', 'beta'],
+      '2054970': ['public', 'experimental'],
+      '730': ['public', 'beta'],
+    }
+
+    // Merge local config versions with common branches
     const paths = [
       path.join(process.cwd(), 'data', 'games', 'installgame.json'),
       path.join(process.cwd(), 'server', 'data', 'games', 'installgame.json'),
     ]
-    let result: any = { appId, versions: ['public'], source: 'local' }
+    let localInfo: any = {}
     for (const p of paths) {
       try {
         const raw = JSON.parse(await fs.readFile(p, 'utf-8'))
         for (const [key, info] of Object.entries(raw)) {
           const g = info as any
           if (String(g.appid) === appId) {
-            result = { ...result, gameKey: key, gameName: g.game_nameCN, versions: g.versions || ['public'], category: g.category }
+            localInfo = { gameKey: key, gameName: g.game_nameCN, versions: g.versions || [], category: g.category }
             break
           }
         }
         break
       } catch {}
     }
-    res.json({ success: true, data: result })
+
+    // Combine branches: local config + common branches, dedupe, ensure public first
+    const branchSet = new Set<string>(['public'])
+    ;(localInfo.versions || []).forEach((v: string) => branchSet.add(v))
+    ;(commonBranches[appId] || []).forEach((v: string) => branchSet.add(v))
+    const versions = Array.from(branchSet)
+
+    res.json({
+      success: true,
+      data: {
+        appId,
+        name: storeData?.name || localInfo.gameName || appId,
+        gameKey: localInfo.gameKey,
+        currentBuildId: buildData?.response?.success === 1 ? buildData.response?.data?.lastbuild : (storeData?.buildid || ''),
+        releaseDate: storeData?.releaseDate,
+        comingSoon: storeData?.comingSoon,
+        versions,
+        source: storeData ? 'steam_store' : 'local'
+      }
+    })
   } catch (error: any) {
     logger.error('Steam version query failed:', error)
     res.status(500).json({ success: false, error: '查询失败', message: error.message })
