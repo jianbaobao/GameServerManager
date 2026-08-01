@@ -311,17 +311,11 @@ const HomePage: React.FC = () => {
           console.warn('读取天气城市设置失败:', error)
         }
 
-        const response = await fetch(`/api/weather/current?city=${weatherCity}`)
+        const response = await apiClient.get(`/api/weather/current?city=${weatherCity}`)
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const result = await response.json()
-
-        if (result.success && result.data) {
+        if (response.success && response.data) {
           // 添加选择的城市代码到天气数据中
-          setWeatherData({ ...result.data, selectedCityCode: weatherCity })
+          setWeatherData({ ...response.data, selectedCityCode: weatherCity })
         } else {
           throw new Error('天气API返回错误数据')
         }
