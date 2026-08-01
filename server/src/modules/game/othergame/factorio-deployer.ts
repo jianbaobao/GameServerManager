@@ -1,13 +1,15 @@
 import axios from 'axios';
 import express, { Request, Response } from 'express';
 import fs from '../../../utils/fsExtraCompat.js';
-import { promises as fsPromises, existsSync } from 'fs';
+import { promises as fsPromises, existsSync, statSync } from 'fs';
 import { createWriteStream, createReadStream } from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { promisify } from 'util';
 import * as zlib from 'zlib';
 import { pipeline } from 'stream';
+import { spawn as childSpawn, exec as childExec } from 'child_process';
+import * as tar from 'tar';
 import { zipToolsManager } from '../../../utils/zipToolsManager.js';
 import { createTarSecurityFilter } from '../../../utils/tarSecurityFilter.js';
 
@@ -519,7 +521,7 @@ export class FactorioDeployer {
 
       // 检测Linux发行版并提供相应的安装命令
       try {
-        const fs = require('fs');
+
         if (existsSync('/etc/debian_version')) {
           console.log('  Ubuntu/Debian: sudo apt-get update && sudo apt-get install tar xz-utils p7zip-full');
         } else if (existsSync('/etc/redhat-release')) {
@@ -551,7 +553,6 @@ export class FactorioDeployer {
    * @returns 是否可用
    */
   private async checkCommandAvailable(command: string): Promise<boolean> {
-    const { spawn } = require('child_process');
 
     try {
       await new Promise<void>((resolve, reject) => {
@@ -563,7 +564,7 @@ export class FactorioDeployer {
           args = ['-h']; // 这些工具使用-h显示帮助
         }
 
-        const child = spawn(command, args, {
+        const child = childSpawn(command, args, {
           stdio: ['ignore', 'pipe', 'pipe'],
           timeout: 5000 // 5秒超时
         });
@@ -611,7 +612,6 @@ export class FactorioDeployer {
    * @param extractPath 解压目标路径
    */
   private async extractWithSystemCommand(archivePath: string, extractPath: string): Promise<void> {
-    const { spawn } = require('child_process');
 
     return new Promise(async (resolve, reject) => {
       console.log(`尝试使用系统命令解压: ${archivePath}`);
@@ -735,7 +735,7 @@ export class FactorioDeployer {
         let installCmd = '';
         if (!isWindows) {
           try {
-            const fs = require('fs');
+
             if (existsSync('/etc/debian_version')) {
               installCmd = 'sudo apt-get update && sudo apt-get install tar xz-utils p7zip-full unzip';
             } else if (existsSync('/etc/redhat-release')) {
@@ -773,7 +773,8 @@ export class FactorioDeployer {
         if (currentCommandIndex >= commands.length) {
           // 分析失败原因
           const fileName = path.basename(archivePath);
-          const fileSize = require('fs').statSync(archivePath).size;
+
+          const fileSize = statSync(archivePath).size;
           const fileSizeMB = (fileSize / 1024 / 1024).toFixed(2);
 
           let diagnosisMsg = '';
@@ -827,7 +828,7 @@ export class FactorioDeployer {
 
         console.log(`尝试命令 ${currentCommandIndex}/${commands.length}: ${command} ${args.join(' ')}`);
 
-        const extractProcess = spawn(command, args, {
+        const extractProcess = childSpawn(command, args, {
           stdio: ['pipe', 'pipe', 'pipe']
         });
 
@@ -918,7 +919,6 @@ export class FactorioDeployer {
    * 解压TAR文件
    */
   private async extractTar(archivePath: string, extractPath: string): Promise<void> {
-    const tar = require('tar');
 
     return tar.extract({
       file: archivePath,
@@ -963,7 +963,7 @@ export class FactorioDeployer {
         // 如果是tar.xz，需要进一步解压tar
         if (archivePath.endsWith('.tar.xz')) {
           console.log('检测到tar.xz格式，进行tar解压...');
-          const tar = require('tar');
+
           const tarExtract = tar.extract({
             cwd: extractPath,
             strict: false, // 允许一些不严格的tar格式
@@ -1052,8 +1052,7 @@ export class FactorioDeployer {
         return null;
       }
 
-      const { exec } = require('child_process');
-      const execPromise = promisify(exec);
+      const execPromise = promisify(childExec);
       const { stdout } = await execPromise(`"${serverExecutable}" --version`);
 
       return stdout.trim();

@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import fs from 'fs/promises'
@@ -138,7 +139,7 @@ export class AuthManager {
 
   private async createDefaultAdmin(): Promise<void> {
     // Generate a strong random password for default admin
-    const defaultPassword = require('crypto').randomBytes(16).toString('hex')
+    const defaultPassword = randomBytes(16).toString('hex')
     this.logger.warn('='.repeat(60))
     this.logger.warn('!! DEFAULT ADMIN ACCOUNT CREATED !!')
     this.logger.warn('!! Username: admin / Password: ' + defaultPassword)

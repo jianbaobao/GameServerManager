@@ -4,6 +4,7 @@ import RconManager, { RconConfig, RconStatus } from '../modules/rcon/RconManager
 import logger from '../utils/logger.js'
 import fs from 'fs/promises'
 import path from 'path'
+import { accessSync } from 'fs'
 
 const router = Router()
 
@@ -22,7 +23,7 @@ const getRconConfigPath = (instanceId: string): string => {
   for (const configPath of possiblePaths) {
     const dir = path.dirname(configPath)
     try {
-      require('fs').accessSync(dir)
+      accessSync(dir)
       return configPath
     } catch {
       // 目录不存在，继续尝试下一个
