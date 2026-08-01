@@ -54,6 +54,8 @@ interface GameInfo {
     port: number
     protocol: string
   }>
+  versions?: string[]
+  category?: string
 }
 
 interface Games {
@@ -5990,15 +5992,26 @@ const GameDeploymentPage: React.FC = () => {
                   游戏版本（分支）
                 </label>
                 <div className="space-y-3">
-                  <input
-                    type="text"
+                  <select
                     value={gameVersion}
                     onChange={(e) => setGameVersion(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="留空使用默认版本，或输入分支名（如 public / experimental）"
-                  />
+                  >
+                    <option value="">默认版本（最新公开版）</option>
+                    {Array.isArray(selectedGame.info.versions) && selectedGame.info.versions.length > 0 ? (
+                      selectedGame.info.versions.map((v: string) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="public">public（正式版）</option>
+                        <option value="beta">beta（测试版）</option>
+                        <option value="experimental">experimental（实验版）</option>
+                      </>
+                    )}
+                  </select>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    游戏版本对应 Steam 分支名。例如：幻兽帕鲁默认 public 分支，测试版为 experimental。留空即使用最新公开版本。
+                    选择 Steam 分支版本。例如：幻兽帕鲁默认 public，测试版为 experimental。选择后会自动追加 -beta 参数。
                   </p>
                 </div>
               </div>
