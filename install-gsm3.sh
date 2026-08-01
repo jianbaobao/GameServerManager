@@ -79,6 +79,22 @@ if test "$server_port" = ""; then
 	server_port=3001
 fi
 
+echo "========================================"
+echo "设置初始管理员密码（至少6位，用于首次登录面板）"
+admin_password=""
+while test ${#admin_password} -lt 6; do
+	read -s -p "请输入管理员初始密码（至少6位，输入为空则自动生成随机密码）: " admin_password
+	echo ""
+	if test -z "$admin_password"; then
+		echo "未输入，将自动生成随机密码（见服务日志）"
+		break
+	fi
+	if test ${#admin_password} -lt 6; then
+		echo "密码太短，至少6位，请重新输入"
+		admin_password=""
+	fi
+done
+
 echo 信息确认阶段
 echo "========================================"
 echo -n "安装方式："
@@ -217,6 +233,9 @@ if test "$install_type" = "1"; then
 	chmod -R 777 "$install_path" 2>/dev/null || true
 
 	echo "SERVER_PORT=$server_port" >> "$install_path/.env"
+	if test -n "$admin_password"; then
+		echo "ADMIN_PASSWORD=$admin_password" >> "$install_path/.env"
+	fi
 	if test "$install_to_systemd" = "yes"; then
 		mkdir -pv /usr/local/lib/systemd/system
 		echo -e "\x1b[33m正在安装systemd服务...\x1b[0m"

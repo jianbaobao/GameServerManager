@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import fs from 'fs/promises'
+import { readFileSync } from 'fs'
 import path from 'path'
 import winston from 'winston'
 import { ConfigManager } from '../config/ConfigManager.js'
@@ -137,13 +138,46 @@ export class AuthManager {
     }
   }
 
+  /**
+   * 获取初始管理员密码：
+   * 1. 环境变量 GSM3_ADMIN_PASSWORD（或 ADMIN_PASSWORD）
+   * 2. 项目根目录 .env 文件中的 ADMIN_PASSWORD
+   * 3. 都没有则生成随机密码
+   */
+  private getInitialAdminPassword(): string {
+    // 1. 环境变量优先
+    const fromEnv = process.env.GSM3_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD
+    if (fromEnv && fromEnv.length >= 6) {
+      return fromEnv
+    }
+    // 2. 尝试读取项目根目录 .env
+    try {
+      const envPath = path.join(process.cwd(), '.env')
+      const envContent = readFileSync(envPath, 'utf-8')
+      const match = envContent.match(/^ADMIN_PASSWORD\s*=\s*(.+)$/m)
+      if (match && match[1].trim().length >= 6) {
+        return match[1].trim()
+      }
+    } catch {
+      // .env 不存在则忽略
+    }
+    // 3. 随机生成
+    return randomBytes(16).toString('hex')
+  }
+
   private async createDefaultAdmin(): Promise<void> {
-    // Generate a strong random password for default admin
-    const defaultPassword = randomBytes(16).toString('hex')
+    // 优先使用用户通过环境变量/ .env 设置的初始密码，否则生成随机密码
+    const defaultPassword = this.getInitialAdminPassword()
+    const isRandom = !(process.env.GSM3_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD)
     this.logger.warn('='.repeat(60))
     this.logger.warn('!! DEFAULT ADMIN ACCOUNT CREATED !!')
     this.logger.warn('!! Username: admin / Password: ' + defaultPassword)
-    this.logger.warn('!! Change this password immediately after first login!')
+    if (isRandom) {
+      this.logger.warn('!! 未设置初始密码，已生成随机密码。')
+      this.logger.warn('!! 建议：在 .env 中配置 ADMIN_PASSWORD 以设置自定义初始密码')
+    } else {
+      this.logger.warn('!! 初始密码来自 ADMIN_PASSWORD 配置，请登录后尽快修改！')
+    }
     this.logger.warn('='.repeat(60))
     const hashedPassword = await bcrypt.hash(defaultPassword, 12)
     
@@ -161,6 +195,21 @@ export class AuthManager {
     
     this.logger.warn(`创建了默认管理员账户: admin / ${defaultPassword}`)
     this.logger.warn('请立即登录并修改默认密码！')
+  }
+
+  /** 重置管理员密码（供 setup-admin 脚本调用） */
+  async resetAdminPassword(username: string, newPassword: string): Promise<boolean> {
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('密码长度至少 6 位')
+    }
+    const user = this.users.get(username)
+    if (!user) {
+      throw new Error(`用户 ${username} 不存在`)
+    }
+    user.password = await bcrypt.hash(newPassword, 12)
+    await this.saveUsers()
+    this.logger.warn(`用户 ${username} 的密码已重置`)
+    return true
   }
 
   async login(username: string, password: string, ip: string, captchaId?: string, captchaCode?: string): Promise<AuthResult> {
