@@ -214,6 +214,7 @@ const GameDeploymentPage: React.FC = () => {
   const [checkingEnvironment, setCheckingEnvironment] = useState<string | null>(null) // 正在检测环境的游戏key
   const [useAnonymous, setUseAnonymous] = useState(true)
   const [steamUsername, setSteamUsername] = useState('')
+  const [gameVersion, setGameVersion] = useState('')
   const [steamPassword, setSteamPassword] = useState('')
   const [validateGameIntegrity, setValidateGameIntegrity] = useState(false)
   
@@ -2599,15 +2600,20 @@ const GameDeploymentPage: React.FC = () => {
         ? 'login anonymous'
         : steamLoginArgs.join(' ')
 
-      const appUpdateCommand = validateGameIntegrity
+      const appUpdateBase = validateGameIntegrity
         ? `app_update ${selectedGame.info.appid} validate`
         : `app_update ${selectedGame.info.appid}`
+
+      // If game version (branch) is specified, add -beta parameter
+      const appUpdateCommand = gameVersion.trim()
+        ? `${appUpdateBase} -beta ${gameVersion.trim()}`
+        : appUpdateBase
 
       // force_install_dir 必须在 login 之前，否则 SteamCMD 会报错
       const fullCommand = `+${forceInstallDir} +${loginCommand} +${appUpdateCommand} +quit`
       setSteamcmdCommand(fullCommand)
     }
-  }, [showInstallModal, selectedGame, useAnonymous, steamUsername, steamPassword, validateGameIntegrity, installPath])
+  }, [showInstallModal, selectedGame, useAnonymous, steamUsername, steamPassword, gameVersion, validateGameIntegrity, installPath])
 
   // 打开安装对话框
   const handleInstallGame = async (gameKey: string, gameInfo: GameInfo) => {
@@ -5975,6 +5981,25 @@ const GameDeploymentPage: React.FC = () => {
                   >
                     <FolderOpen className="w-4 h-4" />
                   </button>
+                </div>
+              </div>
+
+              {/* 游戏版本选择 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  游戏版本（分支）
+                </label>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={gameVersion}
+                    onChange={(e) => setGameVersion(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="留空使用默认版本，或输入分支名（如 public / experimental）"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    游戏版本对应 Steam 分支名。例如：幻兽帕鲁默认 public 分支，测试版为 experimental。留空即使用最新公开版本。
+                  </p>
                 </div>
               </div>
 
