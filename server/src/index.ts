@@ -107,20 +107,12 @@ server.on('connection', socket => {
 })
 
 // 中间件配置
+// Helmet middleware - HSTS disabled for pure HTTP environments
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https:"],
-      fontSrc: ["'self'", "data:"],
-      objectSrc: ["'none'"],
-      frameSrc: ["'none'"],
-    }
-  }, // 开发环境下禁用CSP
-  crossOriginOpenerPolicy: false // 禁用Cross-Origin-Opener-Policy
+  contentSecurityPolicy: false, // CSP disabled to allow HTTP resource loading
+  strictTransportSecurity: false, // Disable HSTS (would force HTTPS upgrade)
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false
 }))
 
 app.use(cors({
