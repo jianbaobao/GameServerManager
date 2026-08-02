@@ -21,6 +21,10 @@ const NetworkToolsPage: React.FC = () => {
     name: 'gsm3', type: 'tcp', localIp: '127.0.0.1', localPort: 3001, remotePort: 0
   })
   const [frpcLoading, setFrpcLoading] = useState(false)
+  const [frpcView, setFrpcView] = useState<'form' | 'config'>('form')
+  const [frpcConfigContent, setFrpcConfigContent] = useState('')
+  const [frpcConfigExists, setFrpcConfigExists] = useState(false)
+  const [frpcConfigLoading, setFrpcConfigLoading] = useState(false)
 
   // VPN 状态
   const [vpnStatus, setVpnStatus] = useState<any>(null)
@@ -62,6 +66,54 @@ const NetworkToolsPage: React.FC = () => {
       const res: any = await apiClient.get('/network-tools/frpc/status')
       if (res.success) setFrpcStatus(res.data)
     } catch (e) { console.warn('frpc状态获取失败', e) }
+  }
+
+  const loadFrpcConfig = async () => {
+    setFrpcConfigLoading(true)
+    try {
+      const res: any = await apiClient.get('/network-tools/frpc/config')
+      if (res.success) {
+        setFrpcConfigContent(res.data.content || '')
+        setFrpcConfigExists(res.data.exists)
+      }
+    } catch (e: any) {
+      alert('读取配置失败: ' + (e?.response?.data?.error || e.message))
+    } finally { setFrpcConfigLoading(false) }
+  }
+
+  const saveFrpcConfig = async () => {
+    setFrpcConfigLoading(true)
+    try {
+      const res: any = await apiClient.post('/network-tools/frpc/config', { content: frpcConfigContent })
+      if (res.success) {
+        setFrpcConfigExists(true)
+        alert('配置文件已保存')
+      }
+    } catch (e: any) {
+      alert('保存配置失败: ' + (e?.response?.data?.error || e.message))
+    } finally { setFrpcConfigLoading(false) }
+  }
+
+  const loadDefaultConfig = () => {
+    setFrpcConfigContent(`serverAddr = "1.2.3.4"
+serverPort = 7000
+
+auth.token = "your_token"
+
+[[proxies]]
+name = "gsm3-panel"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 3001
+remotePort = 3001
+
+[[proxies]]
+name = "gsm3-terminal"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 3002
+remotePort = 3002
+`)
   }
 
   const installFrpc = async () => {
@@ -241,7 +293,7 @@ const NetworkToolsPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${frpcStatus?.installed ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
               {frpcStatus?.installed ? '已安装' : '未安装'}
             </span>
@@ -254,7 +306,66 @@ const NetworkToolsPage: React.FC = () => {
                 {frpcLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} 安装 frpc
               </button>
             )}
+            <span className="flex-1" />
+            <div className="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-0.5">
+              <button
+                onClick={() => setFrpcView('form')}
+                className={`px-3 py-1 rounded-md text-xs font-medium ${frpcView === 'form' ? 'bg-blue-500 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+              >
+                快速配置
+              </button>
+              <button
+                onClick={() => { setFrpcView('config'); loadFrpcConfig() }}
+                className={`px-3 py-1 rounded-md text-xs font-medium ${frpcView === 'config' ? 'bg-blue-500 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+              >
+                配置文件
+              </button>
+            </div>
           </div>
+
+          {/* 配置文件视图 */}
+          {frpcView === 'config' && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  {frpcConfigExists ? (
+                    <span className="text-green-500">✓ 当前使用自定义配置</span>
+                  ) : (
+                    <span className="text-gray-400">尚未保存配置文件（使用快速配置生成）</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={loadDefaultConfig}
+                    className="px-3 py-1.5 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500">
+                    示例配置
+                  </button>
+                  <button onClick={saveFrpcConfig} disabled={frpcConfigLoading}
+                    className="px-3 py-1.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50">
+                    {frpcConfigLoading ? <Loader2 className="w-4 h-4 animate-spin inline" /> : '保存配置'}
+                  </button>
+                </div>
+              </div>
+              <textarea
+                value={frpcConfigContent}
+                onChange={(e) => setFrpcConfigContent(e.target.value)}
+                rows={16}
+                spellCheck={false}
+                className="w-full font-mono text-xs p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={`serverAddr = "1.2.3.4"
+serverPort = 7000
+
+[[proxies]]
+name = "gsm3"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 3001
+remotePort = 3001`}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                💡 支持 frpc.toml 完整语法，可配置多个隧道（TCP/UDP/HTTP/HTTPS）。保存后点击下方"启动 frpc"即使用此配置。
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
@@ -286,7 +397,7 @@ const NetworkToolsPage: React.FC = () => {
           <div className="flex gap-3">
             <button onClick={startFrpc} disabled={frpcLoading}
               className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50">
-              {frpcLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} 启动 frpc
+              {frpcLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />} {frpcView === 'config' && frpcConfigExists ? '使用配置文件启动' : '启动 frpc'}
             </button>
             <button onClick={stopFrpc} disabled={frpcLoading}
               className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium disabled:opacity-50">

@@ -10,6 +10,7 @@ import { execFile, spawn, spawnSync } from 'child_process'
 import { promisify } from 'util'
 import winston from 'winston'
 import { authenticateToken } from '../middleware/auth.js'
+import logger from '../utils/logger.js'
 import { isPrivateHost } from '../utils/networkSecurity.js'
 
 const execFileAsync = promisify(execFile)
@@ -129,6 +130,7 @@ interface FrpcConfig {
   serverAddr: string
   serverPort: number
   token?: string
+  overwriteConfig?: boolean
   proxies: Array<{ name: string; type: string; localIp: string; localPort: number; remotePort?: number; customDomains?: string }>
 }
 
@@ -241,6 +243,44 @@ router.get('/frpc/status', async (_req: Request, res: Response) => {
   }
 })
 
+// 读取 frpc 配置文件内容
+router.get('/frpc/config', async (_req: Request, res: Response) => {
+  try {
+    const configPath = getFrpcConfigPath()
+    let content = ''
+    let exists = false
+    try {
+      content = await fs.readFile(configPath, 'utf-8')
+      exists = true
+    } catch {}
+    res.json({ success: true, data: { exists, content, configPath } })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
+// 保存 frpc 配置文件（原样写入，支持自定义多隧道配置）
+router.post('/frpc/config', async (req: Request, res: Response) => {
+  try {
+    const { content } = req.body || {}
+    if (typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ success: false, error: '配置文件内容不能为空' })
+    }
+    if (content.length > 100000) {
+      return res.status(400).json({ success: false, error: '配置文件过大' })
+    }
+    // 安全校验：禁止危险配置（如从配置文件读取本地文件等）
+    if (/\$(?:{|\(?)|<%/i.test(content)) {
+      return res.status(400).json({ success: false, error: '配置文件包含不支持的表达式' })
+    }
+    await fs.mkdir(getLibDir(), { recursive: true })
+    await fs.writeFile(getFrpcConfigPath(), content, 'utf-8')
+    res.json({ success: true, data: { saved: true, configPath: getFrpcConfigPath() } })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
 router.post('/frpc/install', async (_req: Request, res: Response) => {
   try {
     const ok = await downloadFrpc()
@@ -259,13 +299,26 @@ router.post('/frpc/start', async (req: Request, res: Response) => {
     if (!fsSync.existsSync(getFrpcBinaryPath())) {
       await downloadFrpc()
     }
-    const configPath = await writeFrpcConfig(cfg)
+    // 如果已有自定义配置文件，直接使用（优先）
+    let configPath = getFrpcConfigPath()
+    let customConfig = false
+    try {
+      const existing = await fs.readFile(configPath, 'utf-8')
+      customConfig = existing.trim().length > 0
+    } catch { customConfig = false }
+
+    if (customConfig && !cfg?.overwriteConfig) {
+      // 使用自定义配置
+      logger.info('frpc 使用自定义配置文件启动')
+    } else {
+      configPath = await writeFrpcConfig(cfg)
+    }
     // 停止旧的 frpc
     await stopFrpc()
     const binPath = getFrpcBinaryPath()
     const proc = spawn(binPath, ['-c', configPath], { detached: true, stdio: 'ignore' })
     proc.unref()
-    res.json({ success: true, data: { running: true, configPath } })
+    res.json({ success: true, data: { running: true, configPath, customConfig } })
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message })
   }
