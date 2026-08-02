@@ -50,6 +50,7 @@ import { setupDeveloperRoutes } from './routes/developer.js'
 import wallpaperRouter from './routes/wallpaper.js'
 import aiRouter, { setAIAssistant as setAIAssistantRoute } from './routes/ai.js'
 import networkRouter from './routes/network.js'
+import networkToolsRouter from './routes/networkTools.js'
 import cloudBuildRouter from './routes/cloudBuild.js'
 import fileDeployRouter, { setFileDeployDependencies } from './routes/fileDeploy.js'
 import { consoleLogBuffer } from './utils/logger.js'
@@ -784,6 +785,7 @@ app.use('/api/ai', aiRouter)
 
     // 网络检测路由
     app.use('/api/network', networkRouter)
+    app.use('/api/network-tools', networkToolsRouter)
 
     // 云构建部署路由
     app.use('/api/cloud-build', cloudBuildRouter)

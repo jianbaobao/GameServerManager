@@ -72,6 +72,7 @@ interface SteamcmdInstallRequest {
   steamUsername?: string
   steamPassword?: string
   steamcmdCommand: string
+  downloadMirror?: string
   existingInstanceId?: string
   updateInstanceInfo?: boolean
   resetSteamManifest?: boolean
@@ -222,6 +223,7 @@ const GameDeploymentPage: React.FC = () => {
   const [steamBuildId, setSteamBuildId] = useState('')
   const [steamPassword, setSteamPassword] = useState('')
   const [validateGameIntegrity, setValidateGameIntegrity] = useState(false)
+  const [downloadMirror, setDownloadMirror] = useState('official')
   
   // 实例更新确认弹窗相关状态
   const [showInstanceUpdateDialog, setShowInstanceUpdateDialog] = useState(false)
@@ -3055,7 +3057,8 @@ const GameDeploymentPage: React.FC = () => {
     steamcmdCommand: steamcmdCommand.trim(),
     existingInstanceId: existingInstanceId || undefined,
     updateInstanceInfo,
-    resetSteamManifest
+    resetSteamManifest,
+    downloadMirror
   })
 
   const executeSteamcmdInstall = async (
@@ -6052,6 +6055,30 @@ const GameDeploymentPage: React.FC = () => {
                     选择 Steam 分支版本，选择后自动追加 -beta 参数。
                   </p>
                 </div>
+              </div>
+
+              {/* 下载加速选项 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  下载加速
+                </label>
+                <select
+                  value={downloadMirror}
+                  onChange={(e) => setDownloadMirror(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="official">官方节点（默认）</option>
+                  <option value="cn">国内节点优化（自动选路）</option>
+                  <option value="cn_north">国内节点 - 华北</option>
+                  <option value="cn_south">国内节点 - 华南</option>
+                  <option value="japan">日本节点</option>
+                  <option value="singapore">新加坡节点</option>
+                  <option value="us_west">美国西部节点</option>
+                  <option value="eu">欧洲节点</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  通过切换 Steam CDN CellID 节点加速游戏服务端下载，国内服务器推荐选择国内节点。
+                </p>
               </div>
 
               {/* Steam账户设置 */}

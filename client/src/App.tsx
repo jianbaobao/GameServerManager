@@ -17,6 +17,7 @@ import PluginsPage from '@/pages/PluginsPage'
 import FileManagerPage from '@/pages/FileManagerPage'
 import EnvironmentManagerPage from '@/pages/EnvironmentManagerPage'
 import AboutProjectPage from '@/pages/AboutProjectPage'
+import NetworkToolsPage from './pages/NetworkToolsPage'
 import DeveloperPage from '@/pages/DeveloperPage'
 import LoginTransition from '@/components/LoginTransition'
 import NotificationContainer from '@/components/NotificationContainer'
@@ -156,6 +157,7 @@ function App() {
                         <Route path="/plugins" element={<PageTransition><PluginsPage /></PageTransition>} />
                         <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
                         <Route path="/about" element={<PageTransition><AboutProjectPage /></PageTransition>} />
+                        <Route path="/network-tools" element={<PageTransition><NetworkToolsPage /></PageTransition>} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </Layout>

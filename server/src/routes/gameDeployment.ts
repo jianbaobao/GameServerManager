@@ -776,7 +776,8 @@ router.post('/install', authenticateToken, async (req: Request, res: Response) =
       steamcmdCommand,
       existingInstanceId,
       updateInstanceInfo,
-      resetSteamManifest
+      resetSteamManifest,
+      downloadMirror
     } = req.body
     
     if (!gameKey || !installPath || !instanceName || !steamcmdCommand) {
@@ -929,6 +930,34 @@ router.post('/install', authenticateToken, async (req: Request, res: Response) =
       // 等待终端完全初始化
       await new Promise(resolve => setTimeout(resolve, 1000))
       
+      // 下载加速选项：CellID 节点切换 + 代理
+      let accelPrefix = ''
+      if (downloadMirror && downloadMirror !== 'official') {
+        // 国内 CDN 节点 CellID（华东/华北/华南等）
+        const CELL_IDS: Record<string, string> = {
+          cn: '+@sSteamCellID 45',
+          cn_north: '+@sSteamCellID 46',
+          cn_south: '+@sSteamCellID 44',
+          japan: '+@sSteamCellID 124',
+          singapore: '+@sSteamCellID 99',
+          us_west: '+@sSteamCellID 19',
+          eu: '+@sSteamCellID 11',
+        }
+        const cellArg = CELL_IDS[downloadMirror]
+        if (cellArg) {
+          accelPrefix = cellArg + ' '
+          logger.info(`SteamCMD 下载加速: 使用 ${downloadMirror} 节点 (${cellArg})`)
+        } else if (downloadMirror.startsWith('proxy:')) {
+          // 自定义代理: proxy:http://host:port
+          const proxy = downloadMirror.slice(6)
+          process.env.HTTP_PROXY = proxy
+          process.env.HTTPS_PROXY = proxy
+          logger.info(`SteamCMD 下载加速: 使用代理 ${proxy}`)
+        } else {
+          logger.warn(`未知的下载加速选项: ${downloadMirror}`)
+        }
+      }
+
       // 根据操作系统构建SteamCMD执行命令
       const platform = os.platform()
       let steamcmdExecutable: string
@@ -936,16 +965,16 @@ router.post('/install', authenticateToken, async (req: Request, res: Response) =
       
       if (platform === 'win32') {
         steamcmdExecutable = '.\\steamcmd.exe'
-        fullCommand = `${steamcmdExecutable} ${steamcmdArgs}`
+        fullCommand = `${steamcmdExecutable} ${accelPrefix}${steamcmdArgs}`
       } else {
         // Linux环境下确保使用root用户权限执行SteamCMD
         steamcmdExecutable = './steamcmd.sh'
         // 检查当前用户是否为root，如果不是则使用sudo
         const currentUser = process.env.USER || process.env.USERNAME || 'unknown'
         if (currentUser === 'root') {
-          fullCommand = `${steamcmdExecutable} ${steamcmdArgs}`
+          fullCommand = `${steamcmdExecutable} ${accelPrefix}${steamcmdArgs}`
         } else {
-          fullCommand = `sudo -u root ${steamcmdExecutable} ${steamcmdArgs}`
+          fullCommand = `sudo -u root ${steamcmdExecutable} ${accelPrefix}${steamcmdArgs}`
         }
       }
       
