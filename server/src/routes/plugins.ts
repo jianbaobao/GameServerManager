@@ -1,8 +1,11 @@
 import express from 'express'
 import path from 'path'
 import { promises as fs } from 'fs'
+import fsSync from 'fs'
 import { authenticateToken } from '../middleware/auth.js'
 import type { PluginManager } from '../modules/plugin/PluginManager.js'
+import { PluginSecurityAudit } from '../modules/plugin/pluginSecurityAudit.js'
+import logger from '../utils/logger.js'
 
 const router = express.Router()
 
@@ -10,6 +13,163 @@ let pluginManager: PluginManager
 
 export function setPluginManager(manager: PluginManager) {
   pluginManager = manager
+}
+
+const audit = new PluginSecurityAudit(logger)
+
+// 第三方插件市场源（GitHub 仓库的 plugins 目录，JSON 索引）
+const PLUGIN_MARKET_URLS = [
+  'https://raw.githubusercontent.com/GSManagerXZ/GameServerManager/main/docs/plugins/marketplace.json',
+  'https://ghfast.top/https://raw.githubusercontent.com/GSManagerXZ/GameServerManager/main/docs/plugins/marketplace.json',
+]
+
+// 获取第三方插件市场列表
+router.get('/market/list', authenticateToken, async (_req, res) => {
+  try {
+    for (const url of PLUGIN_MARKET_URLS) {
+      try {
+        const resp = await fetch(url, { signal: AbortSignal.timeout(8000) })
+        if (!resp.ok) continue
+        const data: any = await resp.json()
+        return res.json({ success: true, data: Array.isArray(data) ? data : (data.plugins || []) })
+      } catch {}
+    }
+    // 内置示例插件市场（当远程源不可用时）
+    const builtin = [
+      {
+        name: 'example-plugin',
+        displayName: '示例插件',
+        description: '插件开发示例（本地内置）',
+        version: '1.0.0',
+        author: 'GSM3 Team',
+        category: '示例',
+        downloadUrl: '',
+        builtin: true
+      }
+    ]
+    res.json({ success: true, data: builtin, source: 'builtin' })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
+// 审计插件目录
+router.post('/audit', authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.body || {}
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ success: false, error: '缺少插件名称' })
+    }
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) {
+      return res.status(400).json({ success: false, error: '插件名称格式不正确' })
+    }
+    const pluginPath = pluginManager.getPluginPath(name)
+    if (!fsSync.existsSync(pluginPath)) {
+      return res.status(404).json({ success: false, error: '插件不存在' })
+    }
+    const result = await audit.auditPlugin(pluginPath)
+    res.json({ success: true, data: result })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
+// 安装第三方插件（下载 -> 安全审计 -> 通过后安装）
+router.post('/install', authenticateToken, async (req, res) => {
+  try {
+    const { name, downloadUrl, skipAudit } = req.body || {}
+    if (!name || !downloadUrl) {
+      return res.status(400).json({ success: false, error: '缺少插件名称或下载地址' })
+    }
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) {
+      return res.status(400).json({ success: false, error: '插件名称格式不正确' })
+    }
+    // 仅允许 http(s) 下载地址，防止本地文件读取
+    if (!/^https?:\/\//i.test(downloadUrl)) {
+      return res.status(400).json({ success: false, error: '仅支持 http(s) 下载地址' })
+    }
+
+    const pluginDir = pluginManager.getPluginPath(name)
+    const tmpDir = path.join(process.cwd(), 'data', 'tmp', 'plugin-install-' + Date.now())
+
+    try {
+      // 1. 下载插件包（zip/tar.gz）
+      await fs.mkdir(tmpDir, { recursive: true })
+      const resp = await fetch(downloadUrl, { signal: AbortSignal.timeout(30000) })
+      if (!resp.ok) throw new Error('下载失败: HTTP ' + resp.status)
+      const buf = Buffer.from(await resp.arrayBuffer())
+      if (buf.length === 0 || buf.length > 50 * 1024 * 1024) {
+        throw new Error('插件包大小无效')
+      }
+      const archivePath = path.join(tmpDir, 'plugin-archive')
+      await fs.writeFile(archivePath, buf)
+
+      // 2. 解压到临时目录
+      const extractDir = path.join(tmpDir, 'extracted')
+      await fs.mkdir(extractDir, { recursive: true })
+      if (downloadUrl.endsWith('.zip')) {
+        await extractZip(archivePath, extractDir)
+      } else {
+        const { default: tar } = await import('tar') as any
+        await tar.x({ file: archivePath, cwd: extractDir })
+      }
+
+      // 3. 安全审计
+      if (!skipAudit) {
+        const auditResult = await audit.auditPlugin(extractDir)
+        if (!auditResult.safe) {
+          await fs.rm(tmpDir, { recursive: true, force: true })
+          return res.status(400).json({
+            success: false,
+            error: '插件未通过安全审计，已阻止安装',
+            data: auditResult
+          })
+        }
+      }
+
+      // 4. 复制到插件目录
+      await fs.mkdir(pluginDir, { recursive: true })
+      // 如果解压后是单目录，取内部内容
+      const entries = await fs.readdir(extractDir)
+      let sourceDir = extractDir
+      if (entries.length === 1) {
+        const single = path.join(extractDir, entries[0])
+        const stat = await fs.stat(single)
+        if (stat.isDirectory()) sourceDir = single
+      }
+      await fs.cp(sourceDir, pluginDir, { recursive: true, force: true })
+
+      // 5. 重新加载插件
+      await (pluginManager as any).loadPlugin(name)
+
+      // 6. 返回审计报告
+      const auditResult = await audit.auditPlugin(pluginDir)
+      await fs.rm(tmpDir, { recursive: true, force: true })
+
+      res.json({
+        success: true,
+        message: '插件安装成功（已通过安全审计）',
+        data: { name, audit: auditResult }
+      })
+    } catch (error: any) {
+      await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {})
+      res.status(500).json({ success: false, error: error.message || '安装失败' })
+    }
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message })
+  }
+})
+
+async function extractZip(archivePath: string, destDir: string): Promise<void> {
+  if (process.platform === 'win32') {
+    const { execFile } = await import('child_process') as any
+    const { promisify } = await import('util') as any
+    await promisify(execFile)('powershell', ['-NoProfile', '-Command', `Expand-Archive -Force -Path "${archivePath}" -DestinationPath "${destDir}"`], { timeout: 60000 })
+  } else {
+    const { execFile } = await import('child_process') as any
+    const { promisify } = await import('util') as any
+    await promisify(execFile)('unzip', ['-o', archivePath, '-d', destDir], { timeout: 60000 })
+  }
 }
 
 // 获取所有插件列表

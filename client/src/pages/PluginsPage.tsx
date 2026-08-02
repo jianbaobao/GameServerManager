@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ApiClient } from '@/utils/api'
+import apiClient from '@/utils/api'
 import { useNotificationStore } from '@/stores/notificationStore'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import {
@@ -47,6 +47,12 @@ interface CreatePluginForm {
 const PluginsPage: React.FC = () => {
   const [plugins, setPlugins] = useState<Plugin[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'local' | 'market'>('local')
+  const [marketPlugins, setMarketPlugins] = useState<any[]>([])
+  const [marketLoading, setMarketLoading] = useState(false)
+  const [installingPlugin, setInstallingPlugin] = useState('')
+  const [auditResult, setAuditResult] = useState<any>(null)
+  const [auditPluginName, setAuditPluginName] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingPlugin, setEditingPlugin] = useState<Plugin | null>(null)
   const [showPluginModal, setShowPluginModal] = useState(false)
@@ -64,7 +70,6 @@ const PluginsPage: React.FC = () => {
     icon: 'puzzle'
   })
   const { addNotification } = useNotificationStore()
-  const apiClient = new ApiClient()
 
   // 监听来自插件的消息
   useEffect(() => {
@@ -429,8 +434,140 @@ const PluginsPage: React.FC = () => {
     )
   }
 
+  // 加载插件市场
+  const loadMarket = async () => {
+    setMarketLoading(true)
+    try {
+      const res: any = await apiClient.get('/api/plugins/market/list')
+      if (res.success) setMarketPlugins(res.data || [])
+    } catch (e) { console.warn('加载插件市场失败', e) }
+    finally { setMarketLoading(false) }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'market') loadMarket()
+  }, [activeTab])
+
+  // 安装插件（含安全审计）
+  const installMarketPlugin = async (plugin: any) => {
+    if (!plugin.downloadUrl) {
+      alert('该插件未提供下载地址')
+      return
+    }
+    if (!confirm(`确定安装插件「${plugin.displayName || plugin.name}」？\n\n安装前将进行安全审计，未通过会阻止安装。`)) return
+    setInstallingPlugin(plugin.name)
+    setAuditResult(null)
+    try {
+      const res: any = await apiClient.post('/api/plugins/install', {
+        name: plugin.name,
+        downloadUrl: plugin.downloadUrl
+      })
+      if (res.success) {
+        setAuditResult(res.data?.audit || null)
+        setAuditPluginName(plugin.name)
+        alert('插件安装成功！')
+        // 刷新本地插件列表
+        setTimeout(() => window.location.reload(), 800)
+      } else {
+        setAuditResult(res.data || null)
+        alert('安装失败: ' + (res.error || '未通过安全审计'))
+      }
+    } catch (e: any) {
+      const errData = e?.response?.data
+      if (errData?.data) setAuditResult(errData.data)
+      alert('安装失败: ' + (errData?.error || e.message))
+    } finally { setInstallingPlugin('') }
+  }
+
+
   return (
     <div className="p-6 space-y-6">
+      {/* Tab 切换 */}
+      <div className="flex space-x-2 mb-6">
+        <button
+          onClick={() => setActiveTab('local')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'local' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}
+        >
+          已安装插件
+        </button>
+        <button
+          onClick={() => setActiveTab('market')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'market' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}
+        >
+          <Globe className="w-4 h-4 inline mr-1" />插件市场
+        </button>
+      </div>
+
+      {/* 插件市场视图 */}
+      {activeTab === 'market' && (
+        <div className="space-y-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">🛡️ 插件安全审计</h3>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              安装第三方插件前会自动扫描恶意代码模式（eval/外部脚本/凭证窃取/敏感模块等），
+              未通过安全审计的插件将被阻止安装。
+            </p>
+          </div>
+
+          {auditResult && (
+            <div className={`rounded-lg border p-4 ${auditResult.safe ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-medium">「{auditPluginName}」安全审计报告</h4>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${auditResult.safe ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                  安全评分 {auditResult.score}/100
+                </span>
+              </div>
+              <p className="text-sm mb-3">{auditResult.summary}</p>
+              {auditResult.findings?.length > 0 && (
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {auditResult.findings.map((f: any, i: number) => (
+                    <div key={i} className={`text-xs p-2 rounded ${f.severity === 'high' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' : f.severity === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                      <span className="font-bold">[{f.severity.toUpperCase()}]</span> {f.description}
+                      <div className="text-gray-500 dark:text-gray-400 mt-0.5">文件: {f.file}{f.line ? `:${f.line}` : ''}</div>
+                      {f.snippet && <code className="block mt-0.5 bg-black/10 dark:bg-white/10 px-1 rounded">{f.snippet}</code>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {marketLoading ? (
+            <div className="text-center py-10 text-gray-500">加载插件市场...</div>
+          ) : marketPlugins.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">暂无可用插件</div>
+          ) : (
+            marketPlugins.map((plugin: any) => (
+              <div key={plugin.name} className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{plugin.displayName || plugin.name}</h3>
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{plugin.version}</span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">{plugin.category || '其他'}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{plugin.description}</p>
+                  <div className="text-xs text-gray-400 flex items-center gap-3">
+                    <span className="flex items-center gap-1"><User className="w-3 h-3" />{plugin.author || '未知'}</span>
+                    {plugin.builtin && <span className="text-green-500">内置</span>}
+                  </div>
+                </div>
+                {plugin.downloadUrl && (
+                  <button
+                    onClick={() => installMarketPlugin(plugin)}
+                    disabled={installingPlugin === plugin.name}
+                    className="ml-4 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {installingPlugin === plugin.name ? '安装中...' : '安装'}
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+{activeTab === 'local' && (
+        <div className="p-6 space-y-6">
       {/* 页面标题和操作 */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -849,6 +986,8 @@ const PluginsPage: React.FC = () => {
           setPluginToDelete(null)
         }}
       />
+        </div>
+      )}
     </div>
   )
 }
