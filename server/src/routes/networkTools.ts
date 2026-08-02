@@ -158,9 +158,45 @@ function getPlatformKey(): string {
   return 'linux_x64'
 }
 
+async function findLocalBinary(binName: string): Promise<string | null> {
+  // 1. data/lib 下已解压的目录（如 frp_0.61.1_linux_amd64/frpc, easytier-*/easytier-core）
+  try {
+    const entries = await fs.readdir(getLibDir())
+    for (const e of entries) {
+      const full = path.join(getLibDir(), e)
+      const found = await findBinaryInDir(full, binName)
+      if (found) return found
+    }
+  } catch {}
+  // 2. 项目自带 binaries 目录（随发布包分发，如 server/binaries/）
+  const bundleDirs = [
+    path.join(process.cwd(), 'server', 'binaries'),
+    path.join(process.cwd(), 'binaries'),
+  ]
+  for (const d of bundleDirs) {
+    try {
+      const found = await findBinaryInDir(d, binName)
+      if (found) return found
+    } catch {}
+  }
+  return null
+}
+
 async function downloadFrpc(): Promise<boolean> {
   const binPath = getFrpcBinaryPath()
   if (fsSync.existsSync(binPath)) return true
+
+  // 本地优先：从已解压目录/自带包复制
+  const local = await findLocalBinary(process.platform === 'win32' ? 'frpc.exe' : 'frpc')
+  if (local) {
+    logger.info(`使用本地 frpc 二进制: ${local}`)
+    await fs.mkdir(getLibDir(), { recursive: true })
+    await fs.copyFile(local, binPath)
+    await fs.chmod(binPath, 0o755).catch(() => {})
+    return true
+  }
+
+  // 联网下载（兜底）
   const key = getPlatformKey()
   const url = FRPC_DOWNLOADS[key]
   if (!url) throw new Error('不支持当前平台的 frpc 下载')
@@ -182,15 +218,10 @@ async function downloadFrpc(): Promise<boolean> {
     await fs.unlink(zipPath).catch(() => {})
   }
   await fs.unlink(tmp).catch(() => {})
-  // 找到 frpc 可执行文件
-  const entries = await fs.readdir(getLibDir())
-  for (const e of entries) {
-    const full = path.join(getLibDir(), e)
-    const binName = process.platform === 'win32' ? 'frpc.exe' : 'frpc'
-    const found = await findBinaryInDir(full, binName)
-    if (found) {
-      await fs.chmod(found, 0o755).catch(() => {})
-    }
+  const found = await findLocalBinary(process.platform === 'win32' ? 'frpc.exe' : 'frpc')
+  if (found && found !== binPath) {
+    await fs.copyFile(found, binPath)
+    await fs.chmod(binPath, 0o755).catch(() => {})
   }
   return fsSync.existsSync(binPath)
 }
@@ -367,6 +398,19 @@ const EASYTIER_DOWNLOADS: Record<string, string> = {
 async function downloadEasyTier(): Promise<boolean> {
   const binPath = getEasyTierBinaryPath()
   if (fsSync.existsSync(binPath)) return true
+
+  // 本地优先：从已解压目录/自带包复制
+  const binName = process.platform === 'win32' ? 'easytier-core.exe' : 'easytier-core'
+  const local = await findLocalBinary(binName)
+  if (local) {
+    logger.info(`使用本地 EasyTier 二进制: ${local}`)
+    await fs.mkdir(getLibDir(), { recursive: true })
+    await fs.copyFile(local, binPath)
+    await fs.chmod(binPath, 0o755).catch(() => {})
+    return true
+  }
+
+  // 联网下载（兜底）
   const key = getPlatformKey()
   const url = EASYTIER_DOWNLOADS[key]
   if (!url) throw new Error('不支持当前平台的 EasyTier 下载')
@@ -387,10 +431,10 @@ async function downloadEasyTier(): Promise<boolean> {
     await fs.unlink(zipPath).catch(() => {})
   }
   await fs.unlink(tmp).catch(() => {})
-  const binName = process.platform === 'win32' ? 'easytier-core.exe' : 'easytier-core'
-  const found = await findBinaryInDir(getLibDir(), binName)
+  const found = await findLocalBinary(binName)
   if (found && found !== binPath) {
-    await fs.copyFile(found, binPath).catch(() => {})
+    await fs.copyFile(found, binPath)
+    await fs.chmod(binPath, 0o755).catch(() => {})
   }
   return fsSync.existsSync(binPath)
 }
