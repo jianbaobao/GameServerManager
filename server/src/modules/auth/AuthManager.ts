@@ -87,8 +87,15 @@ export class AuthManager {
       this.logger.info(`加载了 ${users.length} 个用户`)
     } catch (error: any) {
       if (error.code === 'ENOENT') {
-        this.logger.info('用户文件不存在，将创建默认管理员账户')
-        await this.createDefaultAdmin()
+        // 与原项目一致：无用户时前端显示"创建管理员"界面
+        // 仅当配置了 ADMIN_PASSWORD（无头部署）时自动创建默认管理员
+        const configured = process.env.GSM3_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD
+        if (configured && configured.length >= 6) {
+          this.logger.info('检测到 ADMIN_PASSWORD 配置，自动创建默认管理员账户')
+          await this.createDefaultAdmin()
+        } else {
+          this.logger.info('无用户数据，等待前端初始化（创建管理员界面）')
+        }
       } else {
         this.logger.error('加载用户文件失败:', error)
         throw error
