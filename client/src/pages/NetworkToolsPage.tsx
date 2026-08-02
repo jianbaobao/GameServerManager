@@ -39,7 +39,7 @@ const NetworkToolsPage: React.FC = () => {
 
   const fetchSteamStatus = async () => {
     try {
-      const res: any = await apiClient.get('/api/network-tools/steam-accel/status')
+      const res: any = await apiClient.get('/network-tools/steam-accel/status')
       if (res.success) setSteamStatus(res.data)
     } catch (e) { console.warn('Steam加速状态获取失败', e) }
   }
@@ -48,8 +48,8 @@ const NetworkToolsPage: React.FC = () => {
     setSteamLoading(true)
     try {
       const url = steamStatus?.enabled
-        ? '/api/network-tools/steam-accel/disable'
-        : '/api/network-tools/steam-accel/enable'
+        ? '/network-tools/steam-accel/disable'
+        : '/network-tools/steam-accel/enable'
       const res: any = await apiClient.post(url)
       if (res.success) await fetchSteamStatus()
     } catch (e: any) {
@@ -59,7 +59,7 @@ const NetworkToolsPage: React.FC = () => {
 
   const fetchFrpcStatus = async () => {
     try {
-      const res: any = await apiClient.get('/api/network-tools/frpc/status')
+      const res: any = await apiClient.get('/network-tools/frpc/status')
       if (res.success) setFrpcStatus(res.data)
     } catch (e) { console.warn('frpc状态获取失败', e) }
   }
@@ -67,7 +67,7 @@ const NetworkToolsPage: React.FC = () => {
   const installFrpc = async () => {
     setFrpcLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/frpc/install')
+      const res: any = await apiClient.post('/network-tools/frpc/install')
       if (res.success) await fetchFrpcStatus()
     } catch (e: any) {
       alert('frpc 安装失败: ' + (e?.response?.data?.error || e.message))
@@ -77,7 +77,7 @@ const NetworkToolsPage: React.FC = () => {
   const startFrpc = async () => {
     setFrpcLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/frpc/start', {
+      const res: any = await apiClient.post('/network-tools/frpc/start', {
         serverAddr: frpcForm.serverAddr,
         serverPort: Number(frpcForm.serverPort),
         token: frpcForm.token || undefined,
@@ -98,7 +98,7 @@ const NetworkToolsPage: React.FC = () => {
   const stopFrpc = async () => {
     setFrpcLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/frpc/stop')
+      const res: any = await apiClient.post('/network-tools/frpc/stop')
       if (res.success) await fetchFrpcStatus()
     } catch (e: any) {
       alert('frpc 停止失败: ' + e.message)
@@ -107,7 +107,7 @@ const NetworkToolsPage: React.FC = () => {
 
   const fetchVpnStatus = async () => {
     try {
-      const res: any = await apiClient.get('/api/network-tools/vpn/status')
+      const res: any = await apiClient.get('/network-tools/vpn/status')
       if (res.success) setVpnStatus(res.data)
     } catch (e) { console.warn('VPN状态获取失败', e) }
   }
@@ -115,7 +115,7 @@ const NetworkToolsPage: React.FC = () => {
   const installVpn = async () => {
     setVpnLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/vpn/install')
+      const res: any = await apiClient.post('/network-tools/vpn/install')
       if (res.success) await fetchVpnStatus()
     } catch (e: any) {
       alert('EasyTier 安装失败: ' + (e?.response?.data?.error || e.message))
@@ -125,7 +125,7 @@ const NetworkToolsPage: React.FC = () => {
   const startVpn = async () => {
     setVpnLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/vpn/start', {
+      const res: any = await apiClient.post('/network-tools/vpn/start', {
         networkName: vpnForm.networkName,
         networkSecret: vpnForm.networkSecret || undefined,
         peer: vpnForm.peer || undefined,
@@ -140,7 +140,7 @@ const NetworkToolsPage: React.FC = () => {
   const stopVpn = async () => {
     setVpnLoading(true)
     try {
-      const res: any = await apiClient.post('/api/network-tools/vpn/stop')
+      const res: any = await apiClient.post('/network-tools/vpn/stop')
       if (res.success) await fetchVpnStatus()
     } catch (e: any) {
       alert('EasyTier 停止失败: ' + e.message)
