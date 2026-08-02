@@ -129,7 +129,9 @@ const isPathInAllowedDir = (resolvedPath: string): boolean => {
   return allowedDirs.some(dir => normalizedResolved.startsWith(dir + path.sep) || normalizedResolved === dir)
 }
 
-// Secure path validation - double URL decode + sandbox check
+// Secure path validation - double URL decode + traversal/injection protection.
+// 与原项目一致：允许浏览任意绝对路径（根目录、用户目录等），
+// 但拒绝路径穿越、双重编码绕过、命令注入字符。
 const isValidPath = (filePath: string): boolean => {
   if (!filePath || typeof filePath !== 'string') {
     return false
@@ -161,11 +163,19 @@ const isValidPath = (filePath: string): boolean => {
     return false
   }
 
-  // Resolve full path and verify it's inside allowed directories
-  const resolvedPath = path.isAbsolute(normalizedPath)
-    ? normalizedPath
-    : path.resolve(process.cwd(), normalizedPath)
+  // 必须是绝对路径（Linux: /xxx, Windows: C:\\xxx 或 \\xxx）
+  if (!path.isAbsolute(normalizedPath)) {
+    return false
+  }
 
+  return true
+}
+
+// 写操作沙箱检查：解析真实路径（含符号链接）后必须位于允许目录内
+const isWritePathSafe = (filePath: string): boolean => {
+  const resolvedPath = path.isAbsolute(filePath)
+    ? filePath
+    : path.resolve(process.cwd(), filePath)
   return isPathInAllowedDir(resolvedPath)
 }
 // 修复Windows路径格式的工具函数

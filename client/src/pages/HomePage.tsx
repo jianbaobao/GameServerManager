@@ -311,7 +311,7 @@ const HomePage: React.FC = () => {
           console.warn('读取天气城市设置失败:', error)
         }
 
-        const response = await apiClient.get(`/api/weather/current?city=${weatherCity}`)
+        const response = await apiClient.get(`/weather/current?city=${weatherCity}`)
 
         if (response.success && response.data) {
           // 添加选择的城市代码到天气数据中

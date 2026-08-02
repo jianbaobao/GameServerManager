@@ -2627,7 +2627,7 @@ const GameDeploymentPage: React.FC = () => {
       setSteamVersionLoading(true)
       setGameVersion('')
       setSteamBuildId('')
-      apiClient.get(`/api/instances/steam-version/${appId}`)
+      apiClient.get(`/instances/steam-version/${appId}`)
         .then((res: any) => {
           if (res.success && res.data) {
             setSteamVersions(Array.isArray(res.data.versions) ? res.data.versions : [])

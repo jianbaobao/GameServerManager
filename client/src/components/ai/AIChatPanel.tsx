@@ -30,7 +30,7 @@ const AIChatPanel: React.FC<AIChatProps> = ({ terminalOutput, instanceId }) => {
     setLoading(true)
     setMessages(prev => [...prev, { role: 'user', content: '请分析以下终端输出中的错误和警告：\n```\n' + output.substring(0, 1000) + '\n```' }])
     try {
-      const res = await apiClient.post('/api/ai/analyze-terminal', { output })
+      const res = await apiClient.post('/ai/analyze-terminal', { output })
       if (res.success) {
         setMessages(prev => [...prev, { role: 'assistant', content: (res as any).answer }])
       }
@@ -47,7 +47,7 @@ const AIChatPanel: React.FC<AIChatProps> = ({ terminalOutput, instanceId }) => {
     setMessages(prev => [...prev, { role: 'user', content: q }])
     setLoading(true)
     try {
-      const res = await apiClient.post('/api/ai/query', {
+      const res = await apiClient.post('/ai/query', {
         prompt: q,
         terminalOutput: terminalOutput?.substring(0, 3000)
       })
