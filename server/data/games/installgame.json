@@ -26,9 +26,7 @@
       "Linux": "./PalServer.sh -port=8211 -players=32 -log"
     },
     "versions": [
-      "public",
-      "experimental",
-      "test"
+      "public"
     ],
     "category": "survival"
   },
@@ -52,9 +50,7 @@
       "Windows": ".\\SCUM\\Binaries\\Win64\\SCUMServer.exe -Port=7777 -QueryPort=27015 -MaxPlayers=32 -log"
     },
     "versions": [
-      "public",
-      "experimental",
-      "test_live"
+      "public"
     ],
     "category": "survival"
   },
@@ -91,9 +87,12 @@
     },
     "versions": [
       "public",
-      "staging",
-      "aux",
-      "preprod"
+      "aux01-staging",
+      "aux02",
+      "debug",
+      "last-month",
+      "release",
+      "staging"
     ],
     "category": "survival"
   },
@@ -149,9 +148,7 @@
       "Linux": "./srcds_run -game left4dead2 -console -usercon +port 27015 +map c1m1_hotel +maxplayers 8"
     },
     "versions": [
-      "public",
-      "beta",
-      "unstable"
+      "public"
     ],
     "category": "shooter"
   },
@@ -185,8 +182,26 @@
     },
     "versions": [
       "public",
-      "latest_experimental",
-      "unstable"
+      "v3.1.0",
+      "v3.0.1",
+      "v3.0.0",
+      "v2.6",
+      "v2.5",
+      "v1.4",
+      "alpha21.2",
+      "alpha20.7",
+      "alpha19.6",
+      "alpha18.4",
+      "alpha17.4",
+      "alpha16.4",
+      "alpha15.2",
+      "alpha14.7",
+      "alpha13.8",
+      "alpha12.5",
+      "alpha11.6",
+      "alpha10.4",
+      "alpha9.3",
+      "alpha8.8"
     ],
     "category": "survival"
   },
@@ -218,8 +233,14 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "stable"
+      "32bit-windows",
+      "unity-2017.4",
+      "unity-2018",
+      "unity-2019",
+      "unity-2020",
+      "3.24.5.1",
+      "preview",
+      "unity-2022-preview"
     ]
   },
   "Dont_Starve_Together": {
@@ -235,8 +256,8 @@
     },
     "versions": [
       "public",
-      "beta",
-      "staging"
+      "beforemacoschanges",
+      "updatebeta"
     ],
     "category": "survival"
   },
@@ -265,7 +286,10 @@
     "memory": 1,
     "versions": [
       "public",
-      "beta"
+      "v1.3.0.8",
+      "v1.2.4.1",
+      "v1.1.2",
+      "v1.0.6.1"
     ]
   },
   "Project_Zomboid": {
@@ -299,9 +323,9 @@
     },
     "versions": [
       "public",
-      "beta",
-      "b41",
-      "unstable"
+      "42.19",
+      "legacy41",
+      "outdatedunstable"
     ],
     "category": "survival"
   },
@@ -317,8 +341,11 @@
     },
     "versions": [
       "public",
-      "public-test",
-      "public-beta"
+      "default_old",
+      "default_preal",
+      "default_prebw",
+      "default_precta",
+      "default_preml"
     ],
     "category": "survival"
   },
@@ -353,7 +380,9 @@
     },
     "versions": [
       "public",
-      "beta"
+      "double-physics-test",
+      "prerelease",
+      "valve_ds"
     ],
     "category": "shooter"
   },
@@ -367,9 +396,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "cte"
+      "public"
     ]
   },
   "Killing_Floor_2": {
@@ -384,8 +411,7 @@
     ],
     "docs": "https://docs.gsm.xiaozhuhouses.asia/%E6%B8%B8%E6%88%8F%E7%99%BE%E7%A7%91/Steam/%E6%9D%80%E6%88%AE%E7%A9%BA%E9%97%B42.html",
     "versions": [
-      "public",
-      "beta"
+      "public"
     ]
   },
   "ARK": {
@@ -404,8 +430,9 @@
     ],
     "versions": [
       "public",
+      "timecapsule",
       "experimental",
-      "preview"
+      "preaquatica"
     ]
   },
   "ARK: Survival Ascended": {
@@ -422,12 +449,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public_test_realm"
     ]
   },
   "Squad": {
@@ -446,8 +468,7 @@
     },
     "versions": [
       "public",
-      "public-test",
-      "beta"
+      "squad_experimental"
     ],
     "category": "shooter"
   },
@@ -460,11 +481,9 @@
     "versions": [
       "public",
       "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "hotfix",
+      "pre_beta",
+      "valve_server"
     ]
   },
   "Last_Oasis": {
@@ -479,12 +498,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "classic"
     ]
   },
   "Euro_Truck_Simulator_2": {
@@ -502,12 +516,21 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public_beta",
+      "temporary_1_59",
+      "temporary_1_58",
+      "temporary_1_57",
+      "temporary_1_56",
+      "temporary_1_55",
+      "temporary_1_54",
+      "temporary_1_53",
+      "temporary_1_52",
+      "temporary_1_51",
+      "temporary_1_50",
+      "temporary_1_49",
+      "temporary_1_48_5",
+      "temporary_1_48",
+      "temporary_1_47"
     ]
   },
   "American_Truck_Simulator": {
@@ -518,12 +541,22 @@
     "url": "https://store.steampowered.com/app/270880/American_Truck_Simulator/",
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public_beta",
+      "temporary_1_59",
+      "temporary_1_58",
+      "temporary_1_57",
+      "temporary_1_56",
+      "temporary_1_55",
+      "temporary_1_54",
+      "temporary_1_53",
+      "temporary_1_52",
+      "temporary_1_51",
+      "temporary_1_50",
+      "temporary_1_49",
+      "temporary_1_48_5",
+      "temporary_1_48",
+      "temporary_1_47",
+      "temporary_1_46"
     ]
   },
   "ECO": {
@@ -538,8 +571,15 @@
     },
     "versions": [
       "public",
-      "experimental",
-      "beta"
+      "11.0.6",
+      "11.1.13",
+      "12.0.7",
+      "13.0.0",
+      "13.0.1",
+      "13.0.2",
+      "13.0.3",
+      "13.0.4",
+      "playtest"
     ],
     "category": "simulation"
   },
@@ -553,13 +593,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Soulmask_Windows": {
@@ -572,13 +606,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "MORDHAU": {
@@ -592,13 +620,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "No_More_Room_in_Hell": {
@@ -616,12 +638,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "previous"
     ]
   },
   "Hurtworld": {
@@ -639,12 +656,11 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "devtest",
+      "legacy",
+      "oldversion",
+      "privatetest",
+      "whagwan"
     ]
   },
   "Half_Life": {
@@ -678,12 +694,8 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "prerelease",
+      "previous_build"
     ]
   },
   "Starbound": {
@@ -698,12 +710,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "staging"
     ]
   },
   "SCP: Containment Breach Multiplayer": {
@@ -716,13 +723,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "ASTRONEER Dedicated Server": {
@@ -735,13 +736,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Enshrouded": {
@@ -754,9 +749,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "experimental",
-      "beta"
+      "public"
     ]
   },
   "The Forest": {
@@ -772,13 +765,7 @@
       ""
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Sons Of The Forest": {
@@ -791,13 +778,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "V Rising": {
@@ -811,12 +792,11 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "ce-1",
+      "legacy-0.5.x",
+      "legacy-0.6.x",
+      "legacy-1.0.x-pc",
+      "legacy-1.0.x-ce1"
     ]
   },
   "Conan Exiles": {
@@ -833,12 +813,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "conan-exiles-legacy"
     ]
   },
   "NoOneSurvived": {
@@ -852,12 +827,8 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "0.0.8.6",
+      "beta"
     ]
   },
   "Space Engineers": {
@@ -874,12 +845,24 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "1.193",
+      "1.194",
+      "1.195",
+      "1.196",
+      "1.197",
+      "1.198",
+      "1.199",
+      "1.200",
+      "1.201",
+      "1.202",
+      "dx9-32bit",
+      "1.203.6",
+      "1.204",
+      "1.205",
+      "1.206",
+      "1.207",
+      "1.208",
+      "1.209"
     ]
   },
   "TerraTech Worlds": {
@@ -896,12 +879,7 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "ttw_unstable"
     ]
   },
   "Abiotic Factor": {
@@ -914,13 +892,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "The Isle": {
@@ -934,12 +906,8 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "spiro0.11.59.04",
+      "evrima"
     ]
   },
   "Outworlder": {
@@ -973,12 +941,9 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "contact",
+      "creatordlc",
+      "profiling"
     ]
   },
   "DayZ": {
@@ -996,7 +961,7 @@
     },
     "versions": [
       "public",
-      "experimental"
+      "experimental_public"
     ],
     "category": "survival"
   },
@@ -1008,12 +973,26 @@
     "url": "https://store.steampowered.com/app/1169040/_Necesse/",
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "v1.2.0",
+      "v1.3.0",
+      "v1.1.1",
+      "v1.1",
+      "v1.0.3",
+      "v1.0.2",
+      "v1.0.1",
+      "v0.33.1",
+      "v0.33.0",
+      "v0.32.1",
+      "v0.32.0",
+      "v0.31.1",
+      "v0.31.0",
+      "v0.30.0",
+      "v0.29.0",
+      "v0.28.1",
+      "v0.28.0",
+      "v0.27.0",
+      "v0.26.1",
+      "v0.26.0"
     ]
   },
   "Myth of Empires": {
@@ -1026,13 +1005,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Barotrauma": {
@@ -1062,13 +1035,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Risk of Rain 2": {
@@ -1086,12 +1053,8 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "1.1.2.0",
+      "1.1.2.10"
     ]
   },
   "The Front": {
@@ -1104,13 +1067,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Icarus": {
@@ -1124,12 +1081,9 @@
     ],
     "versions": [
       "public",
-      "beta",
+      "2.2.57",
       "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "pre-dangerous-horizons"
     ]
   },
   "Mindustry": {
@@ -1143,13 +1097,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Craftopia": {
@@ -1165,12 +1113,8 @@
     "memory": 8,
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "alpha-unstable-edge",
+      "alpha-unstable"
     ]
   },
   "Night of the Dead": {
@@ -1184,12 +1128,12 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "1.2.4",
+      "2.0.10",
+      "2.1.4",
+      "2.4.1",
+      "3.3.2",
+      "3.4.4"
     ]
   },
   "Assetto Corsa": {
@@ -1202,13 +1146,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Black Mesa": {
@@ -1226,12 +1164,10 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "black-mesa-1-0",
+      "black-mesa-de",
+      "april-2024-rollback",
+      "public-beta"
     ]
   },
   "FOUNDRY": {
@@ -1245,12 +1181,10 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "hotfix_update4",
+      "legacy_update_1",
+      "legacy_update_2_2",
+      "legacy_update_3_0"
     ]
   },
   "Avorion": {
@@ -1265,12 +1199,23 @@
     ],
     "versions": [
       "public",
+      "0.28.1",
+      "0.29.5",
+      "0.30.2",
+      "0.31.2",
+      "0.32.2",
+      "1.0.0",
+      "1.1.4",
+      "1.2.0",
+      "1.3.8",
+      "2.0.11",
+      "2.1.0",
+      "2.2.2",
+      "2.3.2",
+      "2.4.3",
+      "2.5.2",
       "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "previous"
     ]
   },
   "Operation: Harsh Doorstop": {
@@ -1284,13 +1229,7 @@
       "Linux"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Counter-Strike 2": {
@@ -1305,12 +1244,17 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "csgo_legacy",
+      "demo_viewer",
+      "1.40.8.8",
+      "1.41.2.9",
+      "1.41.4.1",
+      "1.41.6.7",
+      "1.41.6.8",
+      "1.41.6.9",
+      "1.41.7.2",
+      "1.41.7.3",
+      "csgo"
     ]
   },
   "Half-Life Dedicated Server": {
@@ -1325,12 +1269,8 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "steam_legacy",
+      "beta"
     ]
   },
   "The_Riftbreaker": {
@@ -1340,13 +1280,7 @@
     "image": "https://shared.cdn.queniuqe.com/store_item_assets/steam/apps/780310/dd5bfa48472fc06f2d802de1844d4dee850eb23b/header_alt_assets_6_schinese.jpg",
     "url": "https://store.steampowered.com/app/780310/The_Riftbreaker/?l=schinese",
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "VEIN": {
@@ -1369,12 +1303,23 @@
     ],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "0.022h10",
+      "0.022h11",
+      "0.022h12",
+      "0.022h13",
+      "0.022h14",
+      "0.022h15",
+      "0.022h16",
+      "0.022h17",
+      "0.022h18",
+      "0.023",
+      "0.024",
+      "0.024h1",
+      "0.024h2",
+      "0.024h3",
+      "0.024h4",
+      "0.024h5",
+      "experimental"
     ]
   },
   "Longvinter": {
@@ -1391,12 +1336,13 @@
     "ports": [],
     "versions": [
       "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "1.10b",
+      "1.11",
+      "1.0-pets",
+      "1.0-releasebuild",
+      "1.13",
+      "1.14",
+      "experimental"
     ]
   },
   "Smalland: Survive the Wilds": {
@@ -1416,13 +1362,7 @@
       }
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Windrose": {
@@ -1435,13 +1375,7 @@
       "Windows"
     ],
     "versions": [
-      "public",
-      "beta",
-      "experimental",
-      "staging",
-      "preview",
-      "dev",
-      "nightly"
+      "public"
     ]
   },
   "Lethal_Company": {
@@ -1458,7 +1392,8 @@
     },
     "versions": [
       "public",
-      "beta"
+      "previous",
+      "public_beta"
     ],
     "category": "horror",
     "memory": 2
