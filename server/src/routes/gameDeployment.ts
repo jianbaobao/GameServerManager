@@ -566,6 +566,60 @@ export function setGameDeploymentManagers(
 }
 
 // 获取可安装的游戏列表
+// 游戏图片代理：weserv CDN（国内可达）拉取 Steam 封面 + 本地缓存
+router.get('/image/:appid', async (req: Request, res: Response) => {
+  try {
+    const { appid } = req.params
+    if (!appid || !/^\d+$/.test(appid)) {
+      return res.status(400).json({ error: '无效的 appid' })
+    }
+    const imageDir = path.join(process.cwd(), 'data', 'images')
+    const cachePath = path.join(imageDir, `${appid}.jpg`)
+    // 命中缓存
+    if (fsSync.existsSync(cachePath)) {
+      return res.sendFile(cachePath)
+    }
+    // 多源尝试：weserv 图片代理 CDN（国内可达）优先，重试多次
+    const akamaiPath = `store_item_assets/steam/apps/${appid}/header.jpg`
+    const sources = [
+      `https://images.weserv.nl/?url=shared.akamai.steamstatic.com/${akamaiPath}`,
+      `https://wsrv.nl/?url=shared.akamai.steamstatic.com/${akamaiPath}`,
+      `https://images.weserv.nl/?url=shared.akamai.steamstatic.com/${akamaiPath}&w=920`,
+      `https://shared.akamai.steamstatic.com/${akamaiPath}`,
+      `https://media.st.dl.eccdnx.com/steam/apps/${appid}/header.jpg`,
+      `https://cdn.steamstatic.com/steam/apps/${appid}/header.jpg`,
+      `https://shared.cdn.queniuqe.com/${akamaiPath}`,
+    ]
+    for (let attempt = 0; attempt < 2; attempt++) {
+      for (const url of sources) {
+        try {
+          const resp = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+            signal: AbortSignal.timeout(12000)
+          })
+          if (resp.ok) {
+            const buf = Buffer.from(await resp.arrayBuffer())
+            if (buf.length > 500) {
+              await fs.mkdir(imageDir, { recursive: true })
+              await fs.writeFile(cachePath, buf)
+              res.setHeader('Content-Type', 'image/jpeg')
+              res.setHeader('Cache-Control', 'public, max-age=86400')
+              return res.send(buf)
+            }
+          }
+        } catch {}
+      }
+    }
+    // 全部失败：返回 1x1 透明占位图
+    const placeholder = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64')
+    res.setHeader('Content-Type', 'image/png')
+    return res.send(placeholder)
+  } catch (error: any) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// 游戏列表接口（供前端展示所有游戏）
 router.get('/games', authenticateToken, async (req: Request, res: Response) => {
   try {
     // 尝试多个可能的路径来查找 installgame.json 文件
