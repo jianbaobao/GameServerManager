@@ -135,7 +135,8 @@ const publicPaths = [
 for (const pp of publicPaths) {
   try { if (statSync(pp).isDirectory()) {
     app.use('/static', express.static(pp))
-    app.use(express.static(pp))
+    // index:false - 让根路由处理 / 并设置 no-store 缓存头
+    app.use(express.static(pp, { index: false }))
     break
   } } catch {}
 }
@@ -147,7 +148,7 @@ const fallbackPaths = [
 ]
 for (const fp of fallbackPaths) {
   try { if (statSync(fp).isDirectory()) {
-    app.use(express.static(fp))
+    app.use(express.static(fp, { index: false }))
     break
   } } catch {}
 }
