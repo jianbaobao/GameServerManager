@@ -849,7 +849,8 @@ router.get('/steam-version/:appId', authenticateToken, async (req: Request, res:
     let storeData: any = null
     try {
       const storeResp = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appId}&l=schinese`, {
-        headers: { 'User-Agent': 'GSM3/1.0' }
+        headers: { 'User-Agent': 'GSM3/1.0' },
+        signal: AbortSignal.timeout(5000)
       })
       const storeJson: any = await storeResp.json()
       if (storeJson[appId]?.success) {
