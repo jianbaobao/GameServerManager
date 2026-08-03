@@ -9,7 +9,7 @@ import path from 'path'
 import os from 'os'
 import { fileURLToPath } from 'url'
 import winston from 'winston'
-import { promises as fs } from 'fs'
+import { promises as fs , readFileSync } from 'fs'
 import { statSync } from 'node:fs'
 
 import { TerminalManager } from './modules/terminal/TerminalManager.js'
@@ -177,8 +177,8 @@ app.get('/api/health', (req, res) => {
 
 // 根路径
 app.get('/', (req, res) => {
-  // 禁用 HTML 缓存，确保前端更新后立即生效
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+  // 禁用 HTML 缓存（no-store），确保前端更新后立即生效
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   res.setHeader('Pragma', 'no-cache')
   res.setHeader('Expires', '0')
   const idxPaths = [
@@ -186,7 +186,13 @@ app.get('/', (req, res) => {
     path.join(__dirname, '../../client/dist/index.html'),
   ]
   for (const ip of idxPaths) {
-    try { if (statSync(ip).isFile()) { return res.sendFile(ip) } } catch {}
+    try {
+      if (statSync(ip).isFile()) {
+        const html = readFileSync(ip, 'utf-8')
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        return res.send(html)
+      }
+    } catch {}
   }
   res.json({
     name: 'GSM3 Server',
@@ -821,7 +827,14 @@ app.use('/api/ai', aiRouter)
   ]
   let sent = false
   for (const ip of indexPaths) {
-    try { if (statSync(ip).isFile()) { res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); res.sendFile(ip); sent = true; break } } catch {}
+    try {
+      if (statSync(ip).isFile()) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        const html = readFileSync(ip, 'utf-8')
+        res.setHeader('Content-Type', 'text/html; charset=utf-8')
+        res.send(html); sent = true; break
+      }
+    } catch {}
   }
   if (!sent) res.status(404).json({ error: 'Frontend not built' })
       }
