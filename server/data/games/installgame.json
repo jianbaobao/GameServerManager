@@ -1430,5 +1430,825 @@
       "experimental"
     ],
     "category": "survival"
+  },
+  "Counter-Strike_1_6": {
+    "game_nameCN": "反恐精英 1.6",
+    "appid": "10",
+    "tip": "经典 CS 1.6 专用服务器",
+    "url": "https://store.steampowered.com/app/10",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\hlds.exe -game cstrike +map de_dust2 +maxplayers 16",
+      "Linux": "./hlds_run -game cstrike +map de_dust2 +maxplayers 16"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Counter-Strike_Source": {
+    "game_nameCN": "反恐精英：起源",
+    "appid": "240",
+    "tip": "CS:S 专用服务器",
+    "url": "https://store.steampowered.com/app/240",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game cstrike -console +map de_dust2 +maxplayers 24",
+      "Linux": "./srcds_run -game cstrike -console +map de_dust2 +maxplayers 24"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Half_Life_2_Deathmatch": {
+    "game_nameCN": "半条命2：死亡竞赛",
+    "appid": "320",
+    "tip": "HL2DM 专用服务器",
+    "url": "https://store.steampowered.com/app/320",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game hl2mp -console +map dm_lockdown +maxplayers 16",
+      "Linux": "./srcds_run -game hl2mp -console +map dm_lockdown +maxplayers 16"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Day_of_Defeat_Source": {
+    "game_nameCN": "胜利之日：起源",
+    "appid": "232090",
+    "tip": "DOD:S 专用服务器",
+    "url": "https://store.steampowered.com/app/232090",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game dod -console +map dod_donner +maxplayers 24",
+      "Linux": "./srcds_run -game dod -console +map dod_donner +maxplayers 24"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Left_4_Dead": {
+    "game_nameCN": "求生之路",
+    "appid": "500",
+    "tip": "L4D 专用服务器",
+    "url": "https://store.steampowered.com/app/500",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game left4dead -console +map l4d_hospital01_apartment +maxplayers 8",
+      "Linux": "./srcds_run -game left4dead -console +map l4d_hospital01_apartment +maxplayers 8"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Sven_Coop": {
+    "game_nameCN": "Sven Co-op",
+    "appid": "225840",
+    "tip": "经典合作 MOD 服务器",
+    "url": "https://store.steampowered.com/app/225840",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\svencoop_ds.exe +map svencoop1 +maxplayers 16",
+      "Linux": "./svencoop_ds +map svencoop1 +maxplayers 16"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Synergy": {
+    "game_nameCN": "Synergy",
+    "appid": "17520",
+    "tip": "HL2 合作 MOD 服务器",
+    "url": "https://store.steampowered.com/app/17520",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\srcds.exe -game synergy -console +map synergy_coast_01 +maxplayers 16",
+      "Linux": "./srcds_run -game synergy -console +map synergy_coast_01 +maxplayers 16"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Natural_Selection_2": {
+    "game_nameCN": "自然选择 2",
+    "appid": "4920",
+    "tip": "NS2 专用服务器",
+    "url": "https://store.steampowered.com/app/4920",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\ns2_server.exe -hostname \"My NS2 Server\" -port 27015",
+      "Linux": "./server_linux -hostname \"My NS2 Server\" -port 27015"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Rising_Storm_2": {
+    "game_nameCN": "风起云涌2：越南",
+    "appid": "418460",
+    "tip": "RS2 专用服务器",
+    "url": "https://store.steampowered.com/app/418460",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\RisingStorm2Server.exe -hostname=\"My RS2\" -Port=7777 -QueryPort=27015",
+      "Linux": "./RisingStorm2Server -hostname=\"My RS2\" -Port=7777 -QueryPort=27015"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Hell_Let_Loose": {
+    "game_nameCN": "人间地狱",
+    "appid": "686810",
+    "tip": "HLL 专用服务器",
+    "url": "https://store.steampowered.com/app/686810",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\HLLServer.exe -log -Port=7777 -QueryPort=27015 -GameLength=0",
+      "Linux": "./HLLServer-Linux-Shipping -log -Port=7777 -QueryPort=27015 -GameLength=0"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 8,
+    "category": "other"
+  },
+  "Post_Scriptum": {
+    "game_nameCN": "Post Scriptum",
+    "appid": "736920",
+    "tip": "二战拟真 FPS 服务器",
+    "url": "https://store.steampowered.com/app/736920",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\PostScriptumServer.exe -Port=7777 -QueryPort=27015"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Verdun": {
+    "game_nameCN": "凡尔登",
+    "appid": "242860",
+    "tip": "一战 FPS 服务器",
+    "url": "https://store.steampowered.com/app/242860",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\VerdunServer.exe -port 27015 -queryport 27016",
+      "Linux": "./VerdunServer.x86_64 -port 27015 -queryport 27016"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "War_of_Rights": {
+    "game_nameCN": "权利之战",
+    "appid": "424370",
+    "tip": "南北战争模拟服务器",
+    "url": "https://store.steampowered.com/app/424370",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\WarOfRights.exe -server -Port=27015"
+    },
+    "ports": [
+      {
+        "port": 27015,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "ATLAS": {
+    "game_nameCN": "ATLAS",
+    "appid": "834910",
+    "tip": "海盗生存 MMO 服务器",
+    "url": "https://store.steampowered.com/app/834910",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\ShooterGame\\Binaries\\Win64\\AtlasServer.exe Atlas?listen -server -log",
+      "Linux": "./ShooterGame/Binaries/Linux/AtlasServer Atlas?listen -server -log"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 8,
+    "category": "other"
+  },
+  "PixARK": {
+    "game_nameCN": "方舟：方块世界",
+    "appid": "593600",
+    "tip": "体素生存服务器",
+    "url": "https://store.steampowered.com/app/593600",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\ShooterGame\\Binaries\\Win64\\PixARKServer.exe TheIsland?listen -server -log",
+      "Linux": "./ShooterGame/Binaries/Linux/PixARKServer TheIsland?listen -server -log"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 6,
+    "category": "other"
+  },
+  "Creativerse": {
+    "game_nameCN": "创世方舟",
+    "appid": "454350",
+    "tip": "沙盒建造服务器",
+    "url": "https://store.steampowered.com/app/454350",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\CreativerseServer.exe -port 7777"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Portal_Knights": {
+    "game_nameCN": "传送门骑士",
+    "appid": "374040",
+    "tip": "合作沙盒 RPG 服务器",
+    "url": "https://store.steampowered.com/app/374040",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\PortalKnightsServer.exe -world=World1",
+      "Linux": "./PortalKnightsServer.x86_64 -world=World1"
+    },
+    "ports": [
+      {
+        "port": 26900,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Vintage_Story": {
+    "game_nameCN": "酿酒传奇",
+    "appid": "794260",
+    "tip": "生存建造服务器",
+    "url": "https://store.steampowered.com/app/794260",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\VintagestoryServer.exe --dataPath ./data",
+      "Linux": "./VintagestoryServer --dataPath ./data"
+    },
+    "ports": [
+      {
+        "port": 42420,
+        "protocol": "tcp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Stationeers": {
+    "game_nameCN": "空间站工程师",
+    "appid": "544550",
+    "tip": "太空建造生存服务器",
+    "url": "https://store.steampowered.com/app/544550",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\rocketstation_DedicatedServer.x86_64 -nographics -batchmode",
+      "Linux": "./rocketstation_DedicatedServer.x86_64 -nographics -batchmode"
+    },
+    "ports": [
+      {
+        "port": 27500,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Dyson_Sphere_Program": {
+    "game_nameCN": "戴森球计划",
+    "appid": "1366540",
+    "tip": "太空工厂游戏，多人需专用服务器（实验性）",
+    "url": "https://store.steampowered.com/app/1366540",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\DSPGAME.exe -server"
+    },
+    "ports": [
+      {
+        "port": 61237,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Medieval_Dynasty": {
+    "game_nameCN": "中世纪王朝",
+    "appid": "895950",
+    "tip": "中世纪生存服务器",
+    "url": "https://store.steampowered.com/app/895950",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\MedievalDynastyServer.exe",
+      "Linux": "./MedievalDynastyServer"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Once_Human": {
+    "game_nameCN": "七日世界",
+    "appid": "2058660",
+    "tip": "开放世界生存服务器",
+    "url": "https://store.steampowered.com/app/2058660",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\OnceHumanServer.exe",
+      "Linux": "./OnceHumanServer"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 8,
+    "category": "other"
+  },
+  "Ashes_of_Creation": {
+    "game_nameCN": "创世纪灰烬",
+    "appid": "1828640",
+    "tip": "MMORPG 测试服务器",
+    "url": "https://store.steampowered.com/app/1828640",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\AshesOfCreationServer.exe -server",
+      "Linux": "./AshesOfCreationServer -server"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 8,
+    "category": "other"
+  },
+  "Raft": {
+    "game_nameCN": "木筏求生",
+    "appid": "648800",
+    "tip": "海上生存服务器",
+    "url": "https://store.steampowered.com/app/648800",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\RaftServer.exe",
+      "Linux": "./RaftServer.x86_64"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Sins_of_a_Solar_Empire": {
+    "game_nameCN": "太阳帝国的原罪",
+    "appid": "204880",
+    "tip": "RTS 服务器",
+    "url": "https://store.steampowered.com/app/204880",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\SinsOfASolarEmpire.exe -server"
+    },
+    "ports": [
+      {
+        "port": 27000,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 2,
+    "category": "other"
+  },
+  "Stellaris": {
+    "game_nameCN": "群星",
+    "appid": "281990",
+    "tip": "科幻策略游戏服务器",
+    "url": "https://store.steampowered.com/app/281990",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\stellaris.exe -server -host",
+      "Linux": "./stellaris -server -host"
+    },
+    "ports": [
+      {
+        "port": 47740,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Crusader_Kings_3": {
+    "game_nameCN": "十字军之王3",
+    "appid": "1158310",
+    "tip": "中世纪策略游戏服务器",
+    "url": "https://store.steampowered.com/app/1158310",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\ck3.exe -server -host",
+      "Linux": "./ck3 -server -host"
+    },
+    "ports": [
+      {
+        "port": 47600,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Cities_Skylines": {
+    "game_nameCN": "城市：天际线",
+    "appid": "255710",
+    "tip": "城市建造游戏服务器（多人 MOD）",
+    "url": "https://store.steampowered.com/app/255710",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\Cities.exe -server",
+      "Linux": "./Cities.x86_64 -server"
+    },
+    "ports": [
+      {
+        "port": 4230,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "SCP_Secret_Laboratory": {
+    "game_nameCN": "SCP：秘密实验室",
+    "appid": "700330",
+    "tip": "SCP 合作生存服务器",
+    "url": "https://store.steampowered.com/app/700330",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\LocalAdmin.exe 7777 --port 7777"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "tcp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Pavlov_VR": {
+    "game_nameCN": "Pavlov VR",
+    "appid": "555160",
+    "tip": "VR 射击游戏服务器",
+    "url": "https://store.steampowered.com/app/555160",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\PavlovServer.exe -PORT=7777 -QueryPort=27015"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Empyrion": {
+    "game_nameCN": "银河工程师",
+    "appid": "383120",
+    "tip": "太空沙盒服务器",
+    "url": "https://store.steampowered.com/app/383120",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\EmpyrionDedicated.exe -logfile log.txt",
+      "Linux": "./EmpyrionDedicated -logfile log.txt"
+    },
+    "ports": [
+      {
+        "port": 30000,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 6,
+    "category": "other"
+  },
+  "Medieval_Engineers": {
+    "game_nameCN": "中世纪工程师",
+    "appid": "412340",
+    "tip": "中世纪建造服务器",
+    "url": "https://store.steampowered.com/app/412340",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\MedievalEngineersServer.exe -logfile log.txt",
+      "Linux": "./MedievalEngineersServer -logfile log.txt"
+    },
+    "ports": [
+      {
+        "port": 27016,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Void_Train": {
+    "game_nameCN": "虚空列车",
+    "appid": "1176690",
+    "tip": "开放世界生存服务器",
+    "url": "https://store.steampowered.com/app/1176690",
+    "system": [
+      "Windows"
+    ],
+    "start_command": {
+      "Windows": ".\\VoidTrainServer.exe -server"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Grounded": {
+    "game_nameCN": "禁闭求生",
+    "appid": "962130",
+    "tip": "缩小生存服务器（SteamCMD appid 1695720）",
+    "url": "https://store.steampowered.com/app/962130",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\GroundedDedicatedServer.exe",
+      "Linux": "./GroundedDedicatedServer"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "ICARUS": {
+    "game_nameCN": "伊卡洛斯",
+    "appid": "1149460",
+    "tip": "外星生存服务器",
+    "url": "https://store.steampowered.com/app/1149460",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\IcarusServer.exe -server",
+      "Linux": "./IcarusServer -server"
+    },
+    "ports": [
+      {
+        "port": 17777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 6,
+    "category": "other"
+  },
+  "Smalland": {
+    "game_nameCN": "小小世界",
+    "appid": "768800",
+    "tip": "微缩世界生存服务器",
+    "url": "https://store.steampowered.com/app/768800",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\SmallandServer.exe -server",
+      "Linux": "./SmallandServer -server"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Tar|_Island": {
+    "game_nameCN": "垂钓岛",
+    "appid": "3023040",
+    "tip": "MMORPG 服务器",
+    "url": "https://store.steampowered.com/app/3023040",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\TarIslandServer.exe",
+      "Linux": "./TarIslandServer"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
+  },
+  "Tribe_Primitive": {
+    "game_nameCN": "原始部落",
+    "appid": "1247580",
+    "tip": "生存建造服务器",
+    "url": "https://store.steampowered.com/app/1247580",
+    "system": [
+      "Windows",
+      "Linux"
+    ],
+    "start_command": {
+      "Windows": ".\\TribeServer.exe",
+      "Linux": "./TribeServer"
+    },
+    "ports": [
+      {
+        "port": 7777,
+        "protocol": "udp"
+      }
+    ],
+    "memory": 4,
+    "category": "other"
   }
 }
