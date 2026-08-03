@@ -177,6 +177,10 @@ app.get('/api/health', (req, res) => {
 
 // 根路径
 app.get('/', (req, res) => {
+  // 禁用 HTML 缓存，确保前端更新后立即生效
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
   const idxPaths = [
     path.join(__dirname, '../public/index.html'),
     path.join(__dirname, '../../client/dist/index.html'),
@@ -817,7 +821,7 @@ app.use('/api/ai', aiRouter)
   ]
   let sent = false
   for (const ip of indexPaths) {
-    try { if (statSync(ip).isFile()) { res.sendFile(ip); sent = true; break } } catch {}
+    try { if (statSync(ip).isFile()) { res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); res.sendFile(ip); sent = true; break } } catch {}
   }
   if (!sent) res.status(404).json({ error: 'Frontend not built' })
       }
