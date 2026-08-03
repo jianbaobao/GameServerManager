@@ -83,6 +83,33 @@ const PluginsPage: React.FC = () => {
         })
       } else if (event.data && event.data.type === 'gsm3-plugin-loaded') {
         console.log('插件加载完成:', event.data.data)
+      } else if (event.data && event.data.type === 'gsm3-api-request') {
+        // 代理插件 API 请求到后端（postMessage 安全通信）
+        const { id, url, config } = event.data
+        const respond = (result: any) => {
+          try { (event.source as any)?.postMessage({ type: 'gsm3-api-response', id, result }, '*') } catch {}
+        }
+        ;(async () => {
+          try {
+            const method = (config && config.method) || 'GET'
+            const bodyStr = config && config.body
+            let data
+            try { data = bodyStr ? JSON.parse(bodyStr) : undefined } catch { data = bodyStr }
+            let res: any
+            if (method === 'GET') {
+              res = await apiClient.get(String(url))
+            } else if (method === 'DELETE') {
+              res = await apiClient.delete(String(url))
+            } else if (method === 'PUT') {
+              res = await apiClient.put(String(url), data)
+            } else {
+              res = await apiClient.post(String(url), data)
+            }
+            respond({ ok: true, status: 200, data: res })
+          } catch (e: any) {
+            respond({ ok: false, status: 500, data: { error: e?.message || '请求失败' } })
+          }
+        })()
       }
     }
 
@@ -265,6 +292,42 @@ const PluginsPage: React.FC = () => {
               `<script type="text/javascript" src="/api/plugins/${plugin.name}/files/gsm3-api.js"></script>`
             )
             
+            // 注入 fetch 代理脚本（跨域安全通信，无需 allow-same-origin）
+            injectedContent = injectedContent.replace(
+              '</head>',
+              `<script>
+                // 安全 fetch 代理：通过 postMessage 转发到父页面（GSM3 面板）
+                const __parentOrigin = '${window.location.origin}';
+                const __gsm3OrigFetch = window.fetch.bind(window);
+                window.fetch = async (input, init) => {
+                  const url = typeof input === 'string' ? input : (input && input.url) || String(input);
+                  const fullUrl = url.startsWith('http') ? url : __parentOrigin + (url.startsWith('/') ? '' : '/') + url;
+                  const id = Math.random().toString(36).slice(2) + Date.now();
+                  const result = await new Promise((resolve) => {
+                    const handler = (e) => {
+                      if (e.data && e.data.type === 'gsm3-api-response' && e.data.id === id) {
+                        window.removeEventListener('message', handler);
+                        resolve(e.data.result);
+                      }
+                    };
+                    window.addEventListener('message', handler);
+                    (window.parent as any).postMessage({
+                      type: 'gsm3-api-request',
+                      id,
+                      url: fullUrl,
+                      config: { method: (init && init.method) || 'GET', body: init && init.body }
+                    }, '*');
+                  });
+                  if (result.ok) {
+                    return { ok: true, status: result.status || 200, json: async () => result.data, text: async () => JSON.stringify(result.data) };
+                  }
+                  const err = new Error((result.data && (result.data.error || result.data.message)) || '请求失败');
+                  (err as any).response = { status: result.status || 500, data: result.data };
+                  throw err;
+                };
+              </script>
+              </head>`
+            )
             // 注入token设置脚本
             injectedContent = injectedContent.replace(
               '</head>',
@@ -806,7 +869,7 @@ const PluginsPage: React.FC = () => {
                   transition={{ duration: 0.4, delay: 0.2 }}
                   srcDoc={currentPluginContent}
                   className="h-full w-full rounded-md border-0 bg-white dark:bg-gray-900 sm:rounded-lg"
-                  sandbox="allow-scripts allow-same-origin allow-forms"
+                  sandbox="allow-scripts allow-forms"
                   title={currentPluginName}
                 />
               </div>
