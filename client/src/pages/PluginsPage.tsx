@@ -53,6 +53,8 @@ const PluginsPage: React.FC = () => {
   const [installingPlugin, setInstallingPlugin] = useState('')
   const [auditResult, setAuditResult] = useState<any>(null)
   const [auditPluginName, setAuditPluginName] = useState('')
+  const [installUrl, setInstallUrl] = useState('')
+  const [installUrlName, setInstallUrlName] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingPlugin, setEditingPlugin] = useState<Plugin | null>(null)
   const [showPluginModal, setShowPluginModal] = useState(false)
@@ -543,6 +545,35 @@ const PluginsPage: React.FC = () => {
     } finally { setInstallingPlugin('') }
   }
 
+  // 通过 URL 安装第三方插件（任意 GitHub/zip 源）
+  const installPluginByUrl = async () => {
+    const url = installUrl.trim()
+    const name = installUrlName.trim()
+    if (!url) { alert('请输入插件 zip 下载地址'); return }
+    if (!name) { alert('请输入插件名称'); return }
+    if (!/^https?:\/\//i.test(url)) { alert('仅支持 http(s) 下载地址'); return }
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) { alert('插件名称只能包含字母、数字、下划线、短横线'); return }
+    if (!confirm(`将从以下地址安装插件「${name}」：\n${url}\n\n安装前将进行安全审计，未通过会阻止安装。`)) return
+    setInstallingPlugin(name)
+    setAuditResult(null)
+    try {
+      const res: any = await apiClient.post('/api/plugins/install', { name, downloadUrl: url })
+      if (res.success) {
+        setAuditResult(res.data?.audit || null)
+        setAuditPluginName(name)
+        alert('插件安装成功！')
+        setTimeout(() => window.location.reload(), 800)
+      } else {
+        setAuditResult(res.data || null)
+        alert('安装失败: ' + (res.error || '未通过安全审计'))
+      }
+    } catch (e: any) {
+      const errData = e?.response?.data
+      if (errData?.data) setAuditResult(errData.data)
+      alert('安装失败: ' + (errData?.error || e.message))
+    } finally { setInstallingPlugin('') }
+  }
+
 
   return (
     <div className="p-6 space-y-6">
@@ -571,6 +602,36 @@ const PluginsPage: React.FC = () => {
               安装第三方插件前会自动扫描恶意代码模式（eval/外部脚本/凭证窃取/敏感模块等），
               未通过安全审计的插件将被阻止安装。
             </p>
+          </div>
+
+          {/* 通过 URL 安装第三方插件 */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">📥 从第三方源安装插件</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              支持从任意 GitHub 仓库 / 第三方市场的 zip 包安装（自动安全审计）。
+              格式：<code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">https://.../plugin.zip</code>
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={installUrlName}
+                onChange={(e) => setInstallUrlName(e.target.value)}
+                placeholder="插件名称（如 my-plugin）"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              />
+              <input
+                value={installUrl}
+                onChange={(e) => setInstallUrl(e.target.value)}
+                placeholder="https://github.com/xxx/plugin.zip"
+                className="flex-[2] px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              />
+              <button
+                onClick={installPluginByUrl}
+                disabled={installingPlugin === installUrlName}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 whitespace-nowrap"
+              >
+                {installingPlugin === installUrlName ? '安装中...' : '安装'}
+              </button>
+            </div>
           </div>
 
           {auditResult && (

@@ -23,31 +23,38 @@ const PLUGIN_MARKET_URLS = [
   'https://ghfast.top/https://raw.githubusercontent.com/jianbaobao/GameServerManager/main/docs/plugins/marketplace.json',
 ]
 
-// 获取第三方插件市场列表
+// 获取第三方插件市场列表（合并多个市场源，去重）
 router.get('/market/list', authenticateToken, async (_req, res) => {
   try {
+    const merged: any[] = []
+    const seen = new Set<string>()
+    let loadedSource = ''
+
+    // 遍历所有市场源，合并插件列表
     for (const url of PLUGIN_MARKET_URLS) {
       try {
         const resp = await fetch(url, { signal: AbortSignal.timeout(8000) })
         if (!resp.ok) continue
         const data: any = await resp.json()
-        return res.json({ success: true, data: Array.isArray(data) ? data : (data.plugins || []) })
+        const plugins = Array.isArray(data) ? data : (data.plugins || [])
+        if (Array.isArray(plugins)) {
+          for (const p of plugins) {
+            if (p && p.name && !seen.has(p.name)) {
+              seen.add(p.name)
+              merged.push(p)
+            }
+          }
+          if (plugins.length > 0 && !loadedSource) loadedSource = url
+        }
       } catch {}
     }
-    // 内置示例插件市场（当远程源不可用时）
-    const builtin = [
-      {
-        name: 'example-plugin',
-        displayName: '示例插件',
-        description: '插件开发示例（本地内置）',
-        version: '1.0.0',
-        author: 'GSM3 Team',
-        category: '示例',
-        downloadUrl: '',
-        builtin: true
-      }
-    ]
-    res.json({ success: true, data: builtin, source: 'builtin' })
+
+    if (merged.length > 0) {
+      return res.json({ success: true, data: merged, source: loadedSource })
+    }
+
+    // 无远程源时返回内置示例
+    res.json({ success: true, data: [], source: 'builtin' })
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message })
   }

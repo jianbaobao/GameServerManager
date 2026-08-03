@@ -8,5 +8,15 @@
     "category": "工具",
     "downloadUrl": "https://github.com/jianbaobao/GameServerManager/raw/main/docs/plugins/packages/tunnel-helper.zip",
     "icon": "globe"
+  },
+  {
+    "name": "example-plugin",
+    "displayName": "示例插件模板",
+    "description": "插件开发示例，展示插件基础结构、主题同步与 API 调用方式，可作为二次开发模板。",
+    "version": "1.0.0",
+    "author": "GSM3 Team",
+    "category": "开发",
+    "downloadUrl": "https://github.com/jianbaobao/GameServerManager/raw/main/docs/plugins/packages/example-plugin.zip",
+    "icon": "code"
   }
 ]
