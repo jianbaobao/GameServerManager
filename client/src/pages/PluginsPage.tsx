@@ -473,6 +473,11 @@ const PluginsPage: React.FC = () => {
     return colorMap[category] || 'bg-gray-500'
   }
 
+  // 插件市场：切换 Tab 时加载市场列表
+  useEffect(() => {
+    if (activeTab === 'market') loadMarket()
+  }, [activeTab])
+
   if (loading) {
     return (
       <motion.div
@@ -506,10 +511,6 @@ const PluginsPage: React.FC = () => {
     } catch (e) { console.warn('加载插件市场失败', e) }
     finally { setMarketLoading(false) }
   }
-
-  useEffect(() => {
-    if (activeTab === 'market') loadMarket()
-  }, [activeTab])
 
   // 安装插件（含安全审计）
   const installMarketPlugin = async (plugin: any) => {
