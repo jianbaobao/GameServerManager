@@ -19,8 +19,8 @@ const audit = new PluginSecurityAudit(logger)
 
 // 第三方插件市场源（GitHub 仓库的 plugins 目录，JSON 索引）
 const PLUGIN_MARKET_URLS = [
-  'https://raw.githubusercontent.com/GSManagerXZ/GameServerManager/main/docs/plugins/marketplace.json',
-  'https://ghfast.top/https://raw.githubusercontent.com/GSManagerXZ/GameServerManager/main/docs/plugins/marketplace.json',
+  'https://raw.githubusercontent.com/jianbaobao/GameServerManager/main/docs/plugins/marketplace.json',
+  'https://ghfast.top/https://raw.githubusercontent.com/jianbaobao/GameServerManager/main/docs/plugins/marketplace.json',
 ]
 
 // 获取第三方插件市场列表

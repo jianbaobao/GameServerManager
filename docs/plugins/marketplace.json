@@ -1,0 +1,12 @@
+[
+  {
+    "name": "tunnel-helper",
+    "displayName": "内网穿透助手",
+    "description": "管理 frpc 内网穿透隧道配置与状态，支持多隧道、快速启动/停止。",
+    "version": "1.0.0",
+    "author": "GSM3 Team",
+    "category": "工具",
+    "downloadUrl": "https://github.com/jianbaobao/GameServerManager/raw/main/docs/plugins/packages/tunnel-helper.zip",
+    "icon": "globe"
+  }
+]
