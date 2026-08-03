@@ -53,6 +53,16 @@ interface MarketInstance {
   name: string
   command: string
   stopcommand: string
+  gameKey?: string
+  appid?: string
+  image?: string
+  category?: string
+  memory?: number
+  versions?: string[]
+  defaultDir?: string
+  system?: string[]
+  url?: string
+  tip?: string
 }
 
 interface MarketResponse {
@@ -767,9 +777,11 @@ const InstanceManagerPage: React.FC = () => {
     }
   }
 
-  // 打开安装模态框
+  // 打开安装模态框（自动带出游戏默认目录）
   const handleOpenInstallModal = (marketInstance: MarketInstance) => {
     setSelectedMarketInstance(marketInstance)
+    // 自动填充该游戏的默认目录（安装时抓取游戏目录）
+    setInstallFormData({ workingDirectory: marketInstance.defaultDir || '' })
     setShowInstallModal(true)
     setTimeout(() => setInstallModalAnimating(true), 10)
   }
@@ -1509,8 +1521,40 @@ const InstanceManagerPage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* 游戏封面 + 信息 */}
+                  <div className="flex gap-4 mb-4">
+                    {marketInstance.image && (
+                      <img
+                        src={marketInstance.image}
+                        alt={marketInstance.name}
+                        className="w-32 h-16 object-cover rounded"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    )}
+                    <div className="flex flex-wrap gap-2 flex-1">
+                      {marketInstance.memory && (
+                        <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">内存 {marketInstance.memory}G</span>
+                      )}
+                      {marketInstance.appid && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">AppID {marketInstance.appid}</span>
+                      )}
+                      {marketInstance.category && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">{marketInstance.category}</span>
+                      )}
+                      {marketInstance.versions && marketInstance.versions.length > 0 && (
+                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">{marketInstance.versions.length} 个版本</span>
+                      )}
+                    </div>
+                  </div>
+
                   {/* 实例信息 */}
                   <div className="space-y-2 mb-4">
+                    {marketInstance.defaultDir && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <FolderOpen className="w-4 h-4 mr-2" />
+                        <span className="truncate">默认目录: {marketInstance.defaultDir}</span>
+                      </div>
+                    )}
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <Terminal className="w-4 h-4 mr-2" />
                       <span className="truncate">启动命令: {marketInstance.command}</span>

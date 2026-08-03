@@ -47,95 +47,45 @@ router.get('/', authenticateToken, (req: Request, res: Response) => {
 // 获取实例市场列表
 router.get('/market', authenticateToken, async (req: Request, res: Response) => {
   try {
-    // 确定系统类型
-    const platform = os.platform()
-    let systemType = 'Linux'
-    if (platform === 'win32') {
-      systemType = 'Windows'
+    // 本地优先：从 installgame.json 生成实例市场（与游戏部署页 108 个游戏一一对应）
+    const paths = [
+      path.join(process.cwd(), 'data', 'games', 'installgame.json'),
+      path.join(process.cwd(), 'server', 'data', 'games', 'installgame.json'),
+    ]
+    let gamesData: any = {}
+    for (const p of paths) {
+      try { gamesData = JSON.parse(await fs.readFile(p, 'utf-8')); break } catch {}
     }
-    
-    // 请求第二个服务获取实例市场数据
-    const marketUrl = `http://api.gsm.xiaozhuhouses.asia:10002/api/instances?system_type=${systemType}`
-    
-    logger.info(`请求实例市场数据: ${marketUrl}`)
-    
-    // 使用Promise包装http请求
-    const marketData = await new Promise((resolve, reject) => {
-      const url = new URL(marketUrl)
-      const options = {
-        hostname: url.hostname,
-        port: url.port,
-        path: url.pathname + url.search,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'GSM3-Server/1.0'
-        }
+    const pf = os.platform() === 'win32' ? 'Windows' : 'Linux'
+    const market = Object.entries(gamesData).map(([key, info]: [string, any]) => {
+      const cmd = info.start_command
+      let command = ''
+      if (typeof cmd === 'string') command = cmd
+      else if (cmd) command = cmd[pf] || cmd['Linux'] || cmd['Windows'] || ''
+      // 默认游戏目录（安装路径提示）：Steam 常见目录
+      const defaultDir = pf === 'Windows'
+        ? `D:\\Games\\${key}`
+        : `/opt/games/${key}`
+      return {
+        name: info.game_nameCN || key,
+        gameKey: key,
+        appid: info.appid || '',
+        image: info.image || '',
+        command: command || 'Set manually',
+        stopcommand: 'ctrl+c',
+        category: info.category || 'other',
+        memory: info.memory || 4,
+        versions: info.versions || ['public'],
+        defaultDir,
+        system: info.system || ['Windows', 'Linux'],
+        url: info.url || '',
+        tip: info.tip || ''
       }
-      
-      const req = http.request(options, (response) => {
-        let data = ''
-        
-        response.on('data', (chunk) => {
-          data += chunk
-        })
-        
-        response.on('end', () => {
-           try {
-             if (response.statusCode && response.statusCode >= 200 && response.statusCode < 300) {
-               const jsonData = JSON.parse(data)
-               resolve(jsonData)
-             } else {
-               logger.error(`API请求失败 - 状态码: ${response.statusCode}, 响应内容: ${data}`)
-               reject(new Error(`HTTP error! status: ${response.statusCode}, response: ${data}`))
-             }
-           } catch (parseError) {
-             logger.error(`JSON解析失败: ${parseError}, 原始数据: ${data}`)
-             reject(new Error(`JSON parse error: ${parseError}`))
-           }
-         })
-      })
-      
-      req.on('error', (error) => {
-        reject(error)
-      })
-      
-      req.setTimeout(10000, () => {
-        req.destroy()
-        reject(new Error('Request timeout'))
-      })
-      
-      req.end()
     })
-    
-    res.json({
-      success: true,
-      data: marketData
-    })
+    res.json({ success: true, data: { instances: market, total: market.length }, source: 'local' })
   } catch (error: any) {
-    logger.warn('Remote market unavailable, using local data:', error.message)
-    try {
-      const paths = [
-        path.join(process.cwd(), 'data', 'games', 'installgame.json'),
-        path.join(process.cwd(), 'server', 'data', 'games', 'installgame.json'),
-      ]
-      let gamesData: any = {}
-      for (const p of paths) {
-        try { gamesData = JSON.parse(await fs.readFile(p, 'utf-8')); break } catch {}
-      }
-      const pf = os.platform() === 'win32' ? 'Windows' : 'Linux'
-      const localMarket = Object.entries(gamesData).map(([key, info]: [string, any]) => {
-        const cmd = info.start_command
-        let command = ''
-        if (typeof cmd === 'string') command = cmd
-        else if (cmd) command = cmd[pf] || cmd['Linux'] || cmd['Windows'] || ''
-        return { name: info.game_nameCN || key, gameKey: key, command: command || 'Set manually', stopcommand: 'ctrl+c', category: info.category || 'other', memory: info.memory || 4, versions: info.versions || ['public'] }
-      })
-      return res.json({ success: true, data: localMarket, source: 'local' })
-    } catch (fallbackError) {
-      logger.error('Local market data also failed:', fallbackError)
-      res.status(500).json({ success: false, error: 'Failed to get market list', message: fallbackError.message })
-    }
+    logger.error('Failed to get market list:', error)
+    res.status(500).json({ success: false, error: 'Failed to get market list', message: error.message })
   }
 })
 
