@@ -1451,7 +1451,12 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "beta",
+      "steam_legacy"
+    ]
   },
   "Counter-Strike_Source": {
     "game_nameCN": "反恐精英：起源",
@@ -1473,7 +1478,12 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "prerelease",
+      "previous_build"
+    ]
   },
   "Half_Life_2_Deathmatch": {
     "game_nameCN": "半条命2：死亡竞赛",
@@ -1495,7 +1505,13 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "prerelease",
+      "previous_build",
+      "steam_legacy"
+    ]
   },
   "Day_of_Defeat_Source": {
     "game_nameCN": "胜利之日：起源",
@@ -1517,7 +1533,10 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Left_4_Dead": {
     "game_nameCN": "求生之路",
@@ -1539,7 +1558,11 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "steampipe"
+    ]
   },
   "Sven_Coop": {
     "game_nameCN": "Sven Co-op",
@@ -1561,7 +1584,11 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "release_candidate_public"
+    ]
   },
   "Synergy": {
     "game_nameCN": "Synergy",
@@ -1583,7 +1610,17 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "development_20.1",
+      "development_portaltest",
+      "steamplayprotontest",
+      "twitch",
+      "version_56.15",
+      "56.16",
+      "development"
+    ]
   },
   "Natural_Selection_2": {
     "game_nameCN": "自然选择 2",
@@ -1605,7 +1642,12 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "beta",
+      "linux"
+    ]
   },
   "Rising_Storm_2": {
     "game_nameCN": "风起云涌2：越南",
@@ -1627,7 +1669,11 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "stabilityupdate"
+    ]
   },
   "Hell_Let_Loose": {
     "game_nameCN": "人间地狱",
@@ -1649,7 +1695,11 @@
       }
     ],
     "memory": 8,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "experimental_branch"
+    ]
   },
   "Post_Scriptum": {
     "game_nameCN": "Post Scriptum",
@@ -1669,7 +1719,10 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Verdun": {
     "game_nameCN": "凡尔登",
@@ -1691,7 +1744,11 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "opentesting"
+    ]
   },
   "War_of_Rights": {
     "game_nameCN": "权利之战",
@@ -1711,7 +1768,11 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "local"
+    ]
   },
   "ATLAS": {
     "game_nameCN": "ATLAS",
@@ -1733,7 +1794,12 @@
       }
     ],
     "memory": 8,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "nomemoryleaks",
+      "publictestrealm"
+    ]
   },
   "PixARK": {
     "game_nameCN": "方舟：方块世界",
@@ -1755,7 +1821,10 @@
       }
     ],
     "memory": 6,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Creativerse": {
     "game_nameCN": "创世方舟",
@@ -1775,7 +1844,10 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Portal_Knights": {
     "game_nameCN": "传送门骑士",
@@ -1797,7 +1869,10 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Vintage_Story": {
     "game_nameCN": "酿酒传奇",
@@ -1819,7 +1894,12 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "public-beta",
+      "default-mono"
+    ]
   },
   "Stationeers": {
     "game_nameCN": "空间站工程师",
@@ -1841,7 +1921,16 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "prerocket",
+      "beta",
+      "devbranch",
+      "multiplayersafe",
+      "preterrain",
+      "previous"
+    ]
   },
   "Dyson_Sphere_Program": {
     "game_nameCN": "戴森球计划",
@@ -1861,7 +1950,22 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "0.4.11",
+      "0.4.12",
+      "0.5.13",
+      "0.6.x",
+      "0.7.x",
+      "0.8.x",
+      "0.9.25",
+      "0.9.26",
+      "0.9.x",
+      "0.10.x",
+      "previous-version",
+      "public-test-0"
+    ]
   },
   "Medieval_Dynasty": {
     "game_nameCN": "中世纪王朝",
@@ -1883,7 +1987,11 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "dx11_non-rt"
+    ]
   },
   "Once_Human": {
     "game_nameCN": "七日世界",
@@ -1905,7 +2013,10 @@
       }
     ],
     "memory": 8,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Ashes_of_Creation": {
     "game_nameCN": "创世纪灰烬",
@@ -1927,7 +2038,10 @@
       }
     ],
     "memory": 8,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Raft": {
     "game_nameCN": "木筏求生",
@@ -1949,7 +2063,12 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "1.09_precrossplayupdate",
+      "beta"
+    ]
   },
   "Sins_of_a_Solar_Empire": {
     "game_nameCN": "太阳帝国的原罪",
@@ -1969,7 +2088,16 @@
       }
     ],
     "memory": 2,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "180mods",
+      "182mods",
+      "184mods",
+      "192legacy",
+      "194mods",
+      "v191mods"
+    ]
   },
   "Stellaris": {
     "game_nameCN": "群星",
@@ -1991,7 +2119,51 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "stellaris_test_4.5",
+      "stellaris_test_4.5_rollback",
+      "2.1.3",
+      "2.2.7",
+      "2.3.3",
+      "2.4.1",
+      "2.5.1",
+      "2.6.3",
+      "2.7.2",
+      "2.8.1",
+      "3.0.2",
+      "3.0.4",
+      "3.1.2",
+      "3.2.2",
+      "3.3.4",
+      "3.4.5",
+      "3.5.3",
+      "3.6.1",
+      "3.7.4",
+      "3.8.4",
+      "3.9.3",
+      "3.10.4",
+      "3.11.3",
+      "3.12.5",
+      "3.13.2",
+      "3.14.1592653",
+      "4.0.23",
+      "4.1.7",
+      "4.2.4",
+      "4.3.0",
+      "4.3.1",
+      "4.3.2",
+      "4.3.3",
+      "4.3.4",
+      "4.3.5",
+      "4.3.6",
+      "4.3.7",
+      "4.4.1",
+      "4.4.3",
+      "4.4.4",
+      "4.4.5"
+    ]
   },
   "Crusader_Kings_3": {
     "game_nameCN": "十字军之王3",
@@ -2013,7 +2185,68 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "1.0.2",
+      "1.0.3",
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.10.0",
+      "1.10.1",
+      "1.10.2",
+      "1.11.0",
+      "1.11.3",
+      "1.11.5",
+      "1.12.1",
+      "1.12.2",
+      "1.12.3",
+      "1.2.1",
+      "1.2.2",
+      "1.4.0",
+      "1.4.2",
+      "1.4.4",
+      "1.5.0.1",
+      "1.5.0.2",
+      "1.5.1",
+      "1.5.1.1",
+      "1.6.0",
+      "1.6.0.1",
+      "1.6.1",
+      "1.6.1.1",
+      "1.6.1.2",
+      "1.7.0",
+      "1.7.1",
+      "1.7.2",
+      "1.8.2",
+      "1.9.0",
+      "1.9.1",
+      "1.9.2",
+      "avx_issue_hotfix",
+      "1.12.4",
+      "1.12.5",
+      "1.13.0",
+      "1.13.1",
+      "1.13.2",
+      "1.14.0",
+      "1.14.1",
+      "1.14.2",
+      "1.14.3",
+      "1.15.0",
+      "1.16.0",
+      "1.16.1",
+      "1.16.2",
+      "1.17.0",
+      "1.17.1",
+      "1.18.0",
+      "1.18.1.1",
+      "1.18.2",
+      "1.18.3",
+      "1.18.4",
+      "1.3.1",
+      "open_beta"
+    ]
   },
   "Cities_Skylines": {
     "game_nameCN": "城市：天际线",
@@ -2035,7 +2268,10 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "SCP_Secret_Laboratory": {
     "game_nameCN": "SCP：秘密实验室",
@@ -2055,7 +2291,13 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "earlyaccess",
+      "labapi-beta",
+      "first_version_of_sl_published_on_steam"
+    ]
   },
   "Pavlov_VR": {
     "game_nameCN": "Pavlov VR",
@@ -2075,7 +2317,10 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Empyrion": {
     "game_nameCN": "银河工程师",
@@ -2097,7 +2342,19 @@
       }
     ],
     "memory": 6,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "alpha10",
+      "alpha11",
+      "alpha12",
+      "alpha6",
+      "alpha7",
+      "alpha8",
+      "alpha9",
+      "previous_release",
+      "experimental"
+    ]
   },
   "Medieval_Engineers": {
     "game_nameCN": "中世纪工程师",
@@ -2161,7 +2418,11 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "public_test"
+    ]
   },
   "ICARUS": {
     "game_nameCN": "伊卡洛斯",
@@ -2183,7 +2444,13 @@
       }
     ],
     "memory": 6,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public",
+      "2.2.57",
+      "experimental",
+      "pre-dangerous-horizons"
+    ]
   },
   "Smalland": {
     "game_nameCN": "小小世界",
@@ -2205,7 +2472,10 @@
       }
     ],
     "memory": 4,
-    "category": "other"
+    "category": "other",
+    "versions": [
+      "public"
+    ]
   },
   "Tar|_Island": {
     "game_nameCN": "垂钓岛",
