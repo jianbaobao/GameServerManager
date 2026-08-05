@@ -347,11 +347,17 @@ router.post('/frpc/start', async (req: Request, res: Response) => {
     // 停止旧的 frpc
     await stopFrpc()
     const binPath = getFrpcBinaryPath()
+    logger.info(`启动 frpc: ${binPath} -c ${configPath}`)
     const proc = spawn(binPath, ['-c', configPath], { detached: true, stdio: 'ignore' })
+    // 处理 spawn 错误（如二进制缺失/损坏），避免静默失败
+    proc.on('error', (err) => {
+      logger.error('frpc 进程启动错误:', err)
+    })
     proc.unref()
     res.json({ success: true, data: { running: true, configPath, customConfig } })
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message })
+    logger.error('frpc 启动失败:', error)
+    res.status(500).json({ success: false, error: error?.message || String(error), errorDetail: error?.stack || '' })
   }
 })
 
@@ -360,7 +366,8 @@ router.post('/frpc/stop', async (_req: Request, res: Response) => {
     await stopFrpc()
     res.json({ success: true, data: { running: false } })
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message })
+    logger.error('frpc 停止失败:', error)
+    res.status(500).json({ success: false, error: error?.message || String(error) })
   }
 })
 

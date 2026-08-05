@@ -143,7 +143,7 @@ remotePort = 3002
       })
       if (res.success) await fetchFrpcStatus()
     } catch (e: any) {
-      alert('frpc 启动失败: ' + (e?.response?.data?.error || e.message))
+      alert('frpc 启动失败: ' + (e?.response?.data?.error || e?.response?.data?.errorDetail || e?.message || JSON.stringify(e)))
     } finally { setFrpcLoading(false) }
   }
 
