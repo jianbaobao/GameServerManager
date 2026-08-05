@@ -7,6 +7,7 @@ import fsSync from 'fs'
 import path from 'path'
 import os from 'os'
 import { execFile, spawn, spawnSync } from 'child_process'
+import https from 'https'
 import { promisify } from 'util'
 import winston from 'winston'
 import { authenticateToken } from '../middleware/auth.js'
@@ -182,6 +183,91 @@ async function findLocalBinary(binName: string): Promise<string | null> {
   return null
 }
 
+interface GitHubAsset { name: string; browser_download_url: string }
+
+const getPlatformAliases = (): string[] => {
+  switch (process.platform) {
+    case 'win32': return ['windows', 'win32', 'win']
+    case 'linux': return ['linux']
+    case 'darwin': return ['darwin', 'macos', 'mac']
+    default: return [process.platform]
+  }
+}
+
+const getFrpArchAliases = (): string[] => {
+  switch (process.arch) {
+    case 'x64': return ['amd64', 'x86_64', 'x64']
+    case 'arm64': return ['arm64', 'aarch64']
+    case 'arm': return ['arm', 'arm_hf']
+    default: return [process.arch]
+  }
+}
+
+const isSupportedArchive = (name: string): boolean => {
+  const n = name.toLowerCase()
+  return n.endsWith('.zip') || n.endsWith('.tar.gz') || n.endsWith('.tgz')
+}
+
+const scoreFrpAsset = (name: string): number => {
+  const n = name.toLowerCase()
+  if (!isSupportedArchive(n)) return -1
+  if (!n.startsWith('frp_')) return -1
+  if (n.includes('android')) return -1
+  const hasPlatform = getPlatformAliases().some(a => n.includes(a))
+  const hasArch = getFrpArchAliases().some(a => n.includes(a))
+  if (!hasPlatform || !hasArch) return -1
+  let score = 100
+  if (n.includes('_' + getPlatformAliases()[0] + '_' + getFrpArchAliases()[0])) score += 20
+  if (n.endsWith('.zip')) score += process.platform === 'win32' ? 8 : 2
+  if (n.endsWith('.tar.gz') || n.endsWith('.tgz')) score += process.platform === 'win32' ? 2 : 8
+  return score
+}
+
+const requestJson = async (url: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    https.get(url, {
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'GSM3-NetworkTools' }
+    }, response => {
+      let body = ''
+      response.on('data', chunk => { body += chunk })
+      response.on('end', () => {
+        if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+          try { reject(new Error(JSON.parse(body).message || 'HTTP ' + response.statusCode)) }
+          catch { reject(new Error('HTTP ' + response.statusCode)) }
+          return
+        }
+        try { resolve(JSON.parse(body)) } catch (e) { reject(e) }
+      })
+    }).on('error', reject)
+  })
+}
+
+// 获取 frp 最新 release 并挑选适合当前平台的 asset（原版 scoreAsset 逻辑）
+async function fetchLatestFrpAsset(): Promise<GitHubAsset> {
+  const release: any = await requestJson('https://api.github.com/repos/fatedier/frp/releases/latest')
+  if (!release || !Array.isArray(release.assets)) {
+    throw new Error('无法获取 frp 最新版本信息')
+  }
+  const candidates = release.assets
+    .map((a: any) => ({ name: a.name, browser_download_url: a.browser_download_url, score: scoreFrpAsset(a.name) }))
+    .filter((a: any) => a.score >= 0)
+    .sort((a: any, b: any) => b.score - a.score)
+  if (candidates.length === 0) {
+    throw new Error('未找到适用于 ' + process.platform + '/' + process.arch + ' 的 frp release')
+  }
+  return { name: candidates[0].name, browser_download_url: candidates[0].browser_download_url }
+}
+
+// 检测已安装 frpc 的版本
+async function getFrpcVersion(binPath: string): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync(binPath, ['--version'], { timeout: 8000 })
+    return (stdout || '').trim().split(String.fromCharCode(10))[0] || ''
+  } catch {
+    return ''
+  }
+}
+
 async function downloadFrpc(): Promise<boolean> {
   const binPath = getFrpcBinaryPath()
   if (fsSync.existsSync(binPath)) return true
@@ -196,13 +282,16 @@ async function downloadFrpc(): Promise<boolean> {
     return true
   }
 
-  // 联网下载（兜底）
-  const key = getPlatformKey()
-  const url = FRPC_DOWNLOADS[key]
-  if (!url) throw new Error('不支持当前平台的 frpc 下载')
+  // 联网下载（兜底）：动态获取 GitHub 最新 release 并选择合适平台 asset（原版机制）
+  const asset = await fetchLatestFrpAsset()
+  logger.info(`从 GitHub 下载 frp: ${asset.name}`)
+  const url = asset.browser_download_url
   await fs.mkdir(getLibDir(), { recursive: true })
   const tmp = path.join(getLibDir(), 'frp_download.tmp')
-  const resp = await fetch(url)
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+    signal: AbortSignal.timeout(180000)
+  })
   if (!resp.ok) throw new Error('frpc 下载失败: HTTP ' + resp.status)
   const buf = Buffer.from(await resp.arrayBuffer())
   await fs.writeFile(tmp, buf)
@@ -260,11 +349,17 @@ router.get('/frpc/status', async (_req: Request, res: Response) => {
   try {
     const binPath = getFrpcBinaryPath()
     const running = isProcessRunning('frpc')
+    // 检测已安装版本（原版机制同步）
+    let version = ''
+    if (fsSync.existsSync(binPath)) {
+      version = await getFrpcVersion(binPath)
+    }
     res.json({
       success: true,
       data: {
         installed: fsSync.existsSync(binPath),
         running,
+        version,
         configPath: getFrpcConfigPath(),
         binaryPath: binPath
       }
