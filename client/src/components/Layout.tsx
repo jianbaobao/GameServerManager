@@ -7,6 +7,7 @@ import socketClient from '@/utils/socket'
 import apiClient from '@/utils/api'
 import LogoutTransition from './LogoutTransition'
 import WallpaperBackground from './WallpaperBackground'
+import AIChatPanel from '@/components/ai/AIChatPanel'
 import {
   Home,
   Terminal,
@@ -347,6 +348,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     >
       {/* 背景壁纸 */}
       <WallpaperBackground />
+      {/* 全局 AI 服务器助理（所有页面右下角） */}
+      <AIChatPanel />
       
       {/* 移动端侧边栏遮罩 */}
       {sidebarOpen && (

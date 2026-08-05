@@ -53,8 +53,32 @@ router.get('/market/list', authenticateToken, async (_req, res) => {
       return res.json({ success: true, data: merged, source: loadedSource })
     }
 
-    // 无远程源时返回内置示例
-    res.json({ success: true, data: [], source: 'builtin' })
+    // 远程源不可用时返回内置插件市场（本地数据，下载走 GitHub 镜像）
+    const builtin = [
+      {
+        name: 'tunnel-helper',
+        displayName: '内网穿透助手',
+        description: '管理 frpc 内网穿透隧道配置与状态，支持多隧道、快速启动/停止。',
+        version: '1.0.0',
+        author: 'GSM3 Team',
+        category: '工具',
+        downloadUrl: 'https://ghfast.top/https://github.com/jianbaobao/GameServerManager/raw/main/docs/plugins/packages/tunnel-helper.zip',
+        icon: 'globe',
+        builtin: true
+      },
+      {
+        name: 'example-plugin',
+        displayName: '示例插件模板',
+        description: '插件开发示例，展示插件基础结构与 API 调用方式，可作为二次开发模板。',
+        version: '1.0.0',
+        author: 'GSM3 Team',
+        category: '开发',
+        downloadUrl: 'https://ghfast.top/https://github.com/jianbaobao/GameServerManager/raw/main/docs/plugins/packages/example-plugin.zip',
+        icon: 'code',
+        builtin: true
+      }
+    ]
+    res.json({ success: true, data: builtin, source: 'builtin' })
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message })
   }
