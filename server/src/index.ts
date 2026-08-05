@@ -783,8 +783,12 @@ async function startServer() {
       // Export fileWatchManager for file routes
       ; (global as any).fileWatchManager = fileWatchManager
 
-    // Initialize AI Assistant
+    // Initialize AI Assistant（服务器助理：注入实例管理器与系统状态获取器）
     const aiAssistant = new AIAssistant(logger)
+    aiAssistant.setInstanceManager(instanceManager)
+    aiAssistant.setSystemStatusGetter(async () => {
+      try { return await systemManager.getSystemInfo() } catch { return null }
+    })
     setAIAssistantRoute(aiAssistant)
 
     // 设置开发者路由

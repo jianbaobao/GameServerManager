@@ -35,17 +35,166 @@ export interface AIQueryResponse {
   source: 'builtin' | 'api'
 }
 
+// 服务器助理系统提示词（管理/修复/开服专家）
+const ASSISTANT_SYSTEM_PROMPT = `你是 GSM3 游戏服务器管理面板的 AI 服务器助理机器人。
+你的职责：
+1. 管理服务器：查看实例状态、启动/停止/重启游戏服务器实例
+2. 修复问题：分析终端报错、排查故障、给出修复步骤或执行操作
+3. 开服：推荐游戏、说明部署步骤、检查部署条件
+4. 提供专业建议：游戏服务器配置优化、端口、内存、SteamCMD 等
+
+你可以调用工具来执行实际操作（列出实例、启停实例、查看系统状态等）。
+回答使用简体中文，简洁专业，操作后汇报结果。`;
+
+// 可调用工具定义（OpenAI function calling 格式）
+const ASSISTANT_TOOLS: any[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'list_instances',
+      description: '列出所有游戏服务器实例及其状态',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_instance_status',
+      description: '获取指定实例的详细状态',
+      parameters: { type: 'object', properties: { id: { type: 'string', description: '实例 ID' } }, required: ['id'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'start_instance',
+      description: '启动指定实例',
+      parameters: { type: 'object', properties: { id: { type: 'string', description: '实例 ID' } }, required: ['id'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'stop_instance',
+      description: '停止指定实例',
+      parameters: { type: 'object', properties: { id: { type: 'string', description: '实例 ID' } }, required: ['id'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'restart_instance',
+      description: '重启指定实例',
+      parameters: { type: 'object', properties: { id: { type: 'string', description: '实例 ID' } }, required: ['id'] }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_system_status',
+      description: '获取服务器系统状态（CPU/内存/磁盘）',
+      parameters: { type: 'object', properties: {} }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_instance_terminal_log',
+      description: '获取实例最近的终端日志（用于诊断报错）',
+      parameters: { type: 'object', properties: { id: { type: 'string', description: '实例 ID' }, lines: { type: 'number', description: '日志行数，默认 50' } }, required: ['id'] }
+    }
+  }
+]
+
 export class AIAssistant {
   private logger: winston.Logger
   private apiEndpoint: string
   private apiKey: string
   private model: string
+  private instanceManager: any = null
+  private systemStatusGetter: (() => Promise<any>) | null = null
+  private chatHistory: Array<{ role: string; content: string }> = []
 
   constructor(logger: winston.Logger) {
     this.logger = logger
-    this.apiEndpoint = process.env.AI_API_ENDPOINT || ''
+    // 支持免费/开源网关：OpenAI 兼容端点（one-api、OpenRouter、Groq、DeepSeek、智谱等）
+    this.apiEndpoint = process.env.AI_API_ENDPOINT || 'https://api.openai.com/v1/chat/completions'
     this.apiKey = process.env.AI_API_KEY || ''
     this.model = process.env.AI_MODEL || 'gpt-3.5-turbo'
+  }
+
+  // 注入实例管理器（供工具调用）
+  setInstanceManager(manager: any): void {
+    this.instanceManager = manager
+  }
+
+  // 注入系统状态获取函数
+  setSystemStatusGetter(fn: () => Promise<any>): void {
+    this.systemStatusGetter = fn
+  }
+
+  // 获取当前 AI 配置（供前端显示）
+  getConfig(): { endpoint: string; model: string; hasKey: boolean } {
+    return {
+      endpoint: this.apiEndpoint,
+      model: this.model,
+      hasKey: !!this.apiKey
+    }
+  }
+
+  // 执行工具调用
+  private async executeTool(name: string, args: any): Promise<string> {
+    try {
+      switch (name) {
+        case 'list_instances': {
+          if (!this.instanceManager) return '实例管理器不可用'
+          const instances = this.instanceManager.getAllInstances ? this.instanceManager.getAllInstances() : []
+          if (!instances || instances.length === 0) return '当前没有游戏服务器实例'
+          return JSON.stringify(instances.map((i: any) => ({
+            id: i.id, name: i.name, status: i.status, gameKey: i.gameKey || '', port: i.port || ''
+          })))
+        }
+        case 'get_instance_status':
+        case 'start_instance':
+        case 'stop_instance':
+        case 'restart_instance': {
+          if (!this.instanceManager) return '实例管理器不可用'
+          const id = args?.id
+          if (!id) return '缺少实例 ID'
+          if (name === 'get_instance_status') {
+            const inst = this.instanceManager.getInstance ? this.instanceManager.getInstance(id) : null
+            return inst ? JSON.stringify({ id: inst.id, name: inst.name, status: inst.status, startCommand: inst.startCommand, workingDirectory: inst.workingDirectory }) : `实例 ${id} 不存在`
+          }
+          const action = name.replace('_instance', '')
+          if (this.instanceManager[action + 'Instance']) {
+            await this.instanceManager[action + 'Instance'](id)
+            return `已执行 ${action} 实例 ${id}`
+          }
+          return `实例管理器不支持 ${action} 操作`
+        }
+        case 'get_system_status': {
+          if (this.systemStatusGetter) {
+            const s = await this.systemStatusGetter()
+            return JSON.stringify(s)
+          }
+          return '系统状态获取器未配置'
+        }
+        case 'get_instance_terminal_log': {
+          if (!this.instanceManager) return '实例管理器不可用'
+          const id = args?.id
+          const lines = args?.lines || 50
+          if (this.instanceManager.getTerminalLog) {
+            const log = await this.instanceManager.getTerminalLog(id, lines)
+            return log || `实例 ${id} 无终端日志`
+          }
+          return '实例管理器不支持获取终端日志'
+        }
+        default:
+          return `未知工具: ${name}`
+      }
+    } catch (e: any) {
+      return `工具执行失败: ${e?.message || e}`
+    }
   }
 
   // Built-in pattern-based analysis (no external API needed)
@@ -113,6 +262,128 @@ export class AIAssistant {
     } catch (err) {
       this.logger.warn(`AI API error: ${err}`)
       return null
+    }
+  }
+
+  // 清空对话历史
+  clearChat(): void {
+    this.chatHistory = []
+  }
+
+  // 服务器助理对话（多轮 + 工具调用）
+  async assistantChat(userMessage: string): Promise<{ answer: string; toolCalls: any[]; historyLength: number }> {
+    const toolCalls: any[] = []
+    if (!this.apiEndpoint) {
+      return { answer: '未配置 AI API。请在 .env 中设置 AI_API_ENDPOINT / AI_API_KEY / AI_MODEL（支持 OpenAI 兼容网关：one-api、OpenRouter、Groq、DeepSeek 等免费/开源方案）。', toolCalls, historyLength: 0 }
+    }
+
+    try {
+      // 维护对话历史（最多 20 条）
+      this.chatHistory.push({ role: 'user', content: userMessage })
+      if (this.chatHistory.length > 20) {
+        this.chatHistory = this.chatHistory.slice(-20)
+      }
+
+      const messages = [
+        { role: 'system', content: ASSISTANT_SYSTEM_PROMPT },
+        ...this.chatHistory
+      ]
+
+      const body = JSON.stringify({
+        model: this.model,
+        messages,
+        tools: ASSISTANT_TOOLS,
+        tool_choice: 'auto',
+        max_tokens: 1500,
+        temperature: 0.5,
+      })
+
+      const url = new URL(this.apiEndpoint)
+      const client = url.protocol === 'https:' ? https : http
+      const response = await new Promise<string>((resolve, reject) => {
+        const req = client.request(url.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': this.apiKey ? `Bearer ${this.apiKey}` : '',
+          },
+        }, (res) => {
+          let data = ''
+          res.on('data', (chunk: string) => { data += chunk })
+          res.on('end', () => resolve(data))
+        })
+        req.on('error', reject)
+        req.setTimeout(30000, () => { req.destroy(); reject(new Error('AI 请求超时')) })
+        req.write(body)
+        req.end()
+      })
+
+      const json = JSON.parse(response)
+      const message = json.choices?.[0]?.message
+
+      // 工具调用循环（最多 3 轮）
+      let finalContent = message?.content || ''
+      let loopMessage = message
+      for (let round = 0; round < 3 && loopMessage?.tool_calls?.length; round++) {
+        // 记录工具调用
+        const roundCalls = []
+        const toolResults = []
+        for (const tc of loopMessage.tool_calls) {
+          const fnName = tc.function?.name || ''
+          let args: any = {}
+          try { args = JSON.parse(tc.function?.arguments || '{}') } catch {}
+          const result = await this.executeTool(fnName, args)
+          roundCalls.push({ name: fnName, args })
+          toolResults.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            content: result
+          })
+        }
+        toolCalls.push(...roundCalls)
+
+        // 把工具结果回传给 AI 生成最终回答
+        const toolMessages = [
+          { role: 'system', content: ASSISTANT_SYSTEM_PROMPT },
+          ...this.chatHistory,
+          loopMessage,
+          ...toolResults
+        ]
+        const body2 = JSON.stringify({
+          model: this.model,
+          messages: toolMessages,
+          max_tokens: 1500,
+          temperature: 0.5,
+        })
+        const response2 = await new Promise<string>((resolve, reject) => {
+          const req2 = client.request(url.toString(), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': this.apiKey ? `Bearer ${this.apiKey}` : '',
+            },
+          }, (res2) => {
+            let d2 = ''
+            res2.on('data', (chunk: string) => { d2 += chunk })
+            res2.on('end', () => resolve(d2))
+          })
+          req2.on('error', reject)
+          req2.setTimeout(30000, () => { req2.destroy(); reject(new Error('AI 请求超时')) })
+          req2.write(body2)
+          req2.end()
+        })
+        const json2 = JSON.parse(response2)
+        loopMessage = json2.choices?.[0]?.message
+        if (loopMessage?.content) finalContent = loopMessage.content
+      }
+
+      // 保存 AI 回复到历史
+      this.chatHistory.push({ role: 'assistant', content: finalContent || '（无回复）' })
+
+      return { answer: finalContent || '（AI 未返回内容）', toolCalls, historyLength: this.chatHistory.length }
+    } catch (err: any) {
+      this.logger.warn(`AI assistant error: ${err?.message || err}`)
+      return { answer: `AI 请求失败: ${err?.message || err}。请检查 AI_API_ENDPOINT / AI_API_KEY 配置。`, toolCalls, historyLength: this.chatHistory.length }
     }
   }
 

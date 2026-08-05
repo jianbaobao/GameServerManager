@@ -47,15 +47,21 @@ const AIChatPanel: React.FC<AIChatProps> = ({ terminalOutput, instanceId }) => {
     setMessages(prev => [...prev, { role: 'user', content: q }])
     setLoading(true)
     try {
-      const res = await apiClient.post('/ai/query', {
-        prompt: q,
-        terminalOutput: terminalOutput?.substring(0, 3000)
-      })
+      const res = await apiClient.post('/ai/assistant', { message: q })
       if (res.success) {
-        setMessages(prev => [...prev, { role: 'assistant', content: (res as any).answer }])
+        const toolCalls = (res as any).toolCalls || []
+        let content = (res as any).answer || ''
+        if (toolCalls.length > 0) {
+          const toolDesc = toolCalls.map((t: any) => {
+            const names: any = { list_instances: '📋 查看实例列表', get_instance_status: '📊 查看实例状态', start_instance: '▶️ 启动实例', stop_instance: '⏹ 停止实例', restart_instance: '🔄 重启实例', get_system_status: '🖥 查看系统状态', get_instance_terminal_log: '📜 获取终端日志' }
+            return (names[t.name] || t.name) + (t.args?.id ? ' (' + t.args.id + ')' : '')
+          })
+          content = '⚙️ 已执行操作：' + toolDesc.join('、') + String.fromCharCode(10,10) + content
+        }
+        setMessages(prev => [...prev, { role: 'assistant', content }])
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '查询失败，请检查网络连接。' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: '查询失败，请检查网络连接或 AI API 配置（AI_API_ENDPOINT / AI_API_KEY）。' }])
     }
     setLoading(false)
   }
