@@ -419,19 +419,21 @@ router.post('/frpc/install', async (_req: Request, res: Response) => {
 router.post('/frpc/start', async (req: Request, res: Response) => {
   try {
     const cfg = req.body as FrpcConfig
-    if (!cfg?.serverAddr || !cfg?.serverPort) {
-      return res.status(400).json({ success: false, error: '请填写 frps 服务器地址和端口' })
-    }
-    if (!fsSync.existsSync(getFrpcBinaryPath())) {
-      await downloadFrpc()
-    }
-    // 如果已有自定义配置文件，直接使用（优先）
+    // 检查是否已有自定义配置文件（优先使用）
     let configPath = getFrpcConfigPath()
     let customConfig = false
     try {
       const existing = await fs.readFile(configPath, 'utf-8')
       customConfig = existing.trim().length > 0
     } catch { customConfig = false }
+
+    // 有自定义配置时无需填写 serverAddr；无配置时才要求表单填写
+    if (!customConfig && (!cfg?.serverAddr || !cfg?.serverPort)) {
+      return res.status(400).json({ success: false, error: '请填写 frps 服务器地址和端口（或先保存配置文件）' })
+    }
+    if (!fsSync.existsSync(getFrpcBinaryPath())) {
+      await downloadFrpc()
+    }
 
     if (customConfig && !cfg?.overwriteConfig) {
       // 使用自定义配置

@@ -129,6 +129,11 @@ remotePort = 3002
   const startFrpc = async () => {
     setFrpcLoading(true)
     try {
+      // 配置文件视图：先自动保存当前编辑内容（自动同步配置文件），再启动
+      if (frpcView === 'config' && frpcConfigContent.trim()) {
+        const saveRes: any = await apiClient.post('/network-tools/frpc/config', { content: frpcConfigContent })
+        if (saveRes.success) setFrpcConfigExists(true)
+      }
       const res: any = await apiClient.post('/network-tools/frpc/start', {
         serverAddr: frpcForm.serverAddr,
         serverPort: Number(frpcForm.serverPort),
