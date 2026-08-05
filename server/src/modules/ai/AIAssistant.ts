@@ -273,8 +273,8 @@ export class AIAssistant {
   // 服务器助理对话（多轮 + 工具调用）
   async assistantChat(userMessage: string): Promise<{ answer: string; toolCalls: any[]; historyLength: number }> {
     const toolCalls: any[] = []
-    if (!this.apiEndpoint) {
-      return { answer: '未配置 AI API。请在 .env 中设置 AI_API_ENDPOINT / AI_API_KEY / AI_MODEL（支持 OpenAI 兼容网关：one-api、OpenRouter、Groq、DeepSeek 等免费/开源方案）。', toolCalls, historyLength: 0 }
+    if (!this.apiKey) {
+      return { answer: "🔑 未配置 AI API 密钥。\n\n请在 .env 中设置（支持 OpenAI 兼容网关，免费方案推荐）：\n\n# Groq（免费）\nAI_API_ENDPOINT=https://api.groq.com/openai/v1/chat/completions\nAI_API_KEY=你的密钥\nAI_MODEL=llama-3.3-70b-versatile\n\n或使用开源网关 one-api / new-api / OpenRouter 将任意 AI 转成 API 调用。\n\n配置后重启服务即可使用服务器助理（管理/修复/开服）。", toolCalls, historyLength: 0 }
     }
 
     try {
@@ -325,7 +325,6 @@ export class AIAssistant {
       let finalContent = message?.content || ''
       let loopMessage = message
       for (let round = 0; round < 3 && loopMessage?.tool_calls?.length; round++) {
-        // 记录工具调用
         const roundCalls = []
         const toolResults = []
         for (const tc of loopMessage.tool_calls) {
@@ -334,34 +333,21 @@ export class AIAssistant {
           try { args = JSON.parse(tc.function?.arguments || '{}') } catch {}
           const result = await this.executeTool(fnName, args)
           roundCalls.push({ name: fnName, args })
-          toolResults.push({
-            role: 'tool',
-            tool_call_id: tc.id,
-            content: result
-          })
+          toolResults.push({ role: 'tool', tool_call_id: tc.id, content: result })
         }
         toolCalls.push(...roundCalls)
 
-        // 把工具结果回传给 AI 生成最终回答
         const toolMessages = [
           { role: 'system', content: ASSISTANT_SYSTEM_PROMPT },
           ...this.chatHistory,
           loopMessage,
           ...toolResults
         ]
-        const body2 = JSON.stringify({
-          model: this.model,
-          messages: toolMessages,
-          max_tokens: 1500,
-          temperature: 0.5,
-        })
+        const body2 = JSON.stringify({ model: this.model, messages: toolMessages, max_tokens: 1500, temperature: 0.5 })
         const response2 = await new Promise<string>((resolve, reject) => {
           const req2 = client.request(url.toString(), {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': this.apiKey ? `Bearer ${this.apiKey}` : '',
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': this.apiKey ? `Bearer ${this.apiKey}` : '' },
           }, (res2) => {
             let d2 = ''
             res2.on('data', (chunk: string) => { d2 += chunk })
@@ -377,9 +363,7 @@ export class AIAssistant {
         if (loopMessage?.content) finalContent = loopMessage.content
       }
 
-      // 保存 AI 回复到历史
       this.chatHistory.push({ role: 'assistant', content: finalContent || '（无回复）' })
-
       return { answer: finalContent || '（AI 未返回内容）', toolCalls, historyLength: this.chatHistory.length }
     } catch (err: any) {
       this.logger.warn(`AI assistant error: ${err?.message || err}`)
