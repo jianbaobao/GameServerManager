@@ -497,6 +497,58 @@ const EASYTIER_DOWNLOADS: Record<string, string> = {
   darwin_x64: 'https://github.com/EasyTier/EasyTier/releases/download/v2.1.2/easytier-macos-x86_64-v2.1.2.tar.gz',
 }
 
+const getEasyTierArchAliases = (): string[] => {
+  switch (process.arch) {
+    case 'x64': return ['x86_64', 'amd64', 'x64']
+    case 'arm64': return ['aarch64', 'arm64']
+    case 'arm': return ['armv7', 'arm']
+    default: return [process.arch]
+  }
+}
+
+// EasyTier asset 打分（原版 scoreAsset 逻辑）
+const scoreEasyTierAsset = (name: string): number => {
+  const n = name.toLowerCase()
+  if (!isSupportedArchive(n)) return -1
+  if (!n.startsWith('easytier-')) return -1
+  if (n.includes('gui') || n.includes('app-') || n.endsWith('.apk')) return -1
+  if (n.endsWith('.rpm') || n.endsWith('.dmg') || n.endsWith('.appimage')) return -1
+  const hasPlatform = getPlatformAliases().some(a => n.includes(a))
+  const hasArch = getEasyTierArchAliases().some(a => n.includes(a))
+  if (!hasPlatform || !hasArch) return -1
+  let score = 100
+  if (n.includes(getPlatformAliases()[0] + '-' + getEasyTierArchAliases()[0])) score += 20
+  if (n.endsWith('.zip')) score += process.platform === 'win32' ? 8 : 2
+  if (n.endsWith('.tar.gz') || n.endsWith('.tgz')) score += process.platform === 'win32' ? 2 : 8
+  return score
+}
+
+// 获取 EasyTier 最新 release asset（原版动态机制）
+async function fetchLatestEasyTierAsset(): Promise<GitHubAsset> {
+  const release: any = await requestJson('https://api.github.com/repos/EasyTier/EasyTier/releases/latest')
+  if (!release || !Array.isArray(release.assets)) {
+    throw new Error('无法获取 EasyTier 最新版本信息')
+  }
+  const candidates = release.assets
+    .map((a: any) => ({ name: a.name, browser_download_url: a.browser_download_url, score: scoreEasyTierAsset(a.name) }))
+    .filter((a: any) => a.score >= 0)
+    .sort((a: any, b: any) => b.score - a.score)
+  if (candidates.length === 0) {
+    throw new Error('未找到适用于 ' + process.platform + '/' + process.arch + ' 的 EasyTier release')
+  }
+  return { name: candidates[0].name, browser_download_url: candidates[0].browser_download_url }
+}
+
+// 检测 EasyTier 版本
+async function getEasyTierVersion(binPath: string): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync(binPath, ['--version'], { timeout: 8000 })
+    return (stdout || '').trim().split(String.fromCharCode(10))[0] || ''
+  } catch {
+    return ''
+  }
+}
+
 async function downloadEasyTier(): Promise<boolean> {
   const binPath = getEasyTierBinaryPath()
   if (fsSync.existsSync(binPath)) return true
@@ -512,13 +564,16 @@ async function downloadEasyTier(): Promise<boolean> {
     return true
   }
 
-  // 联网下载（兜底）
-  const key = getPlatformKey()
-  const url = EASYTIER_DOWNLOADS[key]
-  if (!url) throw new Error('不支持当前平台的 EasyTier 下载')
+  // 联网下载（兜底）：动态获取 GitHub 最新 release asset（原版机制）
+  const asset = await fetchLatestEasyTierAsset()
+  logger.info('从 GitHub 下载 EasyTier: ' + asset.name)
+  const url = asset.browser_download_url
   await fs.mkdir(getLibDir(), { recursive: true })
   const tmp = path.join(getLibDir(), 'easytier_download.tmp')
-  const resp = await fetch(url)
+  const resp = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+    signal: AbortSignal.timeout(180000)
+  })
   if (!resp.ok) throw new Error('EasyTier 下载失败: HTTP ' + resp.status)
   const buf = Buffer.from(await resp.arrayBuffer())
   await fs.writeFile(tmp, buf)
@@ -543,11 +598,17 @@ async function downloadEasyTier(): Promise<boolean> {
 
 router.get('/vpn/status', async (_req: Request, res: Response) => {
   try {
+    const binPath = getEasyTierBinaryPath()
+    let version = ''
+    if (fsSync.existsSync(binPath)) {
+      version = await getEasyTierVersion(binPath)
+    }
     res.json({
       success: true,
       data: {
-        installed: fsSync.existsSync(getEasyTierBinaryPath()),
-        binaryPath: getEasyTierBinaryPath(),
+        installed: fsSync.existsSync(binPath),
+        version,
+        binaryPath: binPath,
         platform: getPlatformKey()
       }
     })

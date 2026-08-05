@@ -295,7 +295,7 @@ remotePort = 3002
 
           <div className="flex items-center gap-3 mb-4">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${frpcStatus?.installed ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
-              {frpcStatus?.installed ? '已安装' : '未安装'}
+              {frpcStatus?.installed ? (frpcStatus.version ? `已安装 ${frpcStatus.version}` : '已安装') : '未安装'}
             </span>
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${frpcStatus?.running ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>
               {frpcStatus?.running ? '运行中' : '未运行'}
@@ -426,7 +426,7 @@ remotePort = 3001`}
 
           <div className="flex items-center gap-3 mb-6">
             <span className={`px-3 py-1 rounded-full text-xs font-medium ${vpnStatus?.installed ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'}`}>
-              {vpnStatus?.installed ? '已安装' : '未安装'}
+              {vpnStatus?.installed ? (vpnStatus.version ? `已安装 ${vpnStatus.version}` : '已安装') : '未安装'}
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
               平台: {vpnStatus?.platform || '检测中'}
