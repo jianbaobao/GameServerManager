@@ -385,7 +385,14 @@ export class SchedulerManager extends EventEmitter {
       if (!gamesFilePath) {
         gamesFilePath = possiblePaths[0]
       }
-      
+
+      // 保护自定义游戏清单：本地已存在则跳过更新，避免覆盖用户配置的 108 个游戏
+      try {
+        await fs.access(gamesFilePath)
+        this.logger.info('本地游戏清单已存在，跳过自动更新（保留自定义游戏列表）')
+        return
+      } catch {}
+
       this.logger.info('开始更新Steam游戏部署清单', { remoteUrl, localPath: gamesFilePath })
       
       // 确保目录存在
