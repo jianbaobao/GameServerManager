@@ -137,7 +137,7 @@
     "game_nameCN": "求生之路2",
     "appid": "222860",
     "tip": "游戏端口：27015 TCP，配置文件位置：server.cfg，温馨提示：需要使用正版游戏账户登录，请确保已购买游戏",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/222860/header.jpg",
+    "image": "/api/game-deployment/image/222860",
     "url": "https://store.steampowered.com/app/550/Left_4_Dead_2/",
     "system": [
       "Windows",
@@ -667,7 +667,7 @@
     "game_nameCN": "半条命",
     "appid": "90",
     "tip": "游戏端口：​27015 （UDP/TCP），配置文件：valve/server.cfg请将保存位置映射到容器外部，防止存档丢失",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/70/header.jpg",
+    "image": "/api/game-deployment/image/90",
     "url": "https://store.steampowered.com/app/70/HalfLife/",
     "versions": [
       "public",
@@ -1261,7 +1261,7 @@
     "game_nameCN": "半条命 dedicated server",
     "appid": "90",
     "tip": "可以使用本服务端开反恐精英1.6，搭建反恐精英1.6方法请自行查找",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/90/header.jpg",
+    "image": "/api/game-deployment/image/90",
     "url": "https://store.steampowered.com/app/90/Half-Life_Dedicated_Server/",
     "system": [
       "Windows",
@@ -2429,7 +2429,7 @@
     ],
     "memory": 4,
     "category": "other",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/412340/header.jpg"
+    "image": "/api/game-deployment/image/412340"
   },
   "Void_Train": {
     "game_nameCN": "虚空列车",
@@ -2450,7 +2450,7 @@
     ],
     "memory": 4,
     "category": "other",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1176690/header.jpg"
+    "image": "/api/game-deployment/image/1176690"
   },
   "Grounded": {
     "game_nameCN": "禁闭求生",
@@ -2555,7 +2555,7 @@
     ],
     "memory": 4,
     "category": "other",
-    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3023040/header.jpg"
+    "image": "/api/game-deployment/image/3023040"
   },
   "Tribe_Primitive": {
     "game_nameCN": "原始部落",
