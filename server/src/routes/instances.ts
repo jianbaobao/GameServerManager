@@ -944,7 +944,7 @@ router.get('/:id/server-config/:file', authenticateToken, async (req: Request, r
     
     const file = req.params.file
     // 白名单允许的文件（防目录穿越）
-    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml']
+    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml', 'bukkit.yml', 'spigot.yml', 'paper.yml', 'paper-global.yml', 'paper-world-defaults.yml', 'commands.yml', 'help.yml', 'version_history.json', 'usercache.json', 'server-icon.txt']
     if (!allowed.includes(file)) return res.status(400).json({ success: false, error: '不允许访问该文件' })
     
     const filePath = path.join(instance.workingDirectory, file)
@@ -966,7 +966,7 @@ router.put('/:id/server-config/:file', authenticateToken, async (req: Request, r
     if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
     
     const file = req.params.file
-    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml']
+    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml', 'bukkit.yml', 'spigot.yml', 'paper.yml', 'paper-global.yml', 'paper-world-defaults.yml', 'commands.yml', 'help.yml', 'version_history.json', 'usercache.json', 'server-icon.txt']
     if (!allowed.includes(file)) return res.status(400).json({ success: false, error: '不允许访问该文件' })
     
     const { content } = req.body

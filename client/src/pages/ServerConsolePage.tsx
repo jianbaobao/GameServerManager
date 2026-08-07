@@ -425,9 +425,11 @@ export default function ServerConsolePage() {
   const logRef = useRef<HTMLDivElement>(null)
   const [showMc, setShowMc] = useState(false)
   const [activeTab, setActiveTab] = useState<'ops' | 'settings' | 'backups'>('ops')
+  const [configFile, setConfigFile] = useState('server.properties')
   const [properties, setProperties] = useState('')
   const [backups, setBackups] = useState<any[]>([])
   const [backingUp, setBackingUp] = useState(false)
+  const CONFIG_FILES = ['server.properties', 'bukkit.yml', 'spigot.yml', 'paper.yml', 'whitelist.json', 'ops.json', 'banned-players.json', 'banned-ips.json', 'permissions.yml', 'usercache.json']
 
   const selected = instances.find(i => i.id === selectedId) || null
 
@@ -558,21 +560,22 @@ export default function ServerConsolePage() {
   }
 
   // ===== 服务器管理功能 =====
-  const loadProperties = useCallback(async () => {
+  const loadProperties = useCallback(async (file?: string) => {
     if (!selectedId) return
+    const f = file || configFile
     try {
-      const res: any = await apiClient.get(`/instances/${selectedId}/server-config/server.properties`)
+      const res: any = await apiClient.get(`/instances/${selectedId}/server-config/${encodeURIComponent(f)}`)
       const r = res.data || res
       if (r?.success) setProperties(r.data?.content || '')
     } catch { /* 忽略 */ }
-  }, [selectedId])
+  }, [selectedId, configFile])
 
   const saveProperties = async () => {
     if (!selectedId) return
     try {
-      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/server.properties`, { content: properties })
+      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/${encodeURIComponent(configFile)}`, { content: properties })
       const r = res.data || res
-      if (r?.success) addLog('success', '配置文件已保存（重启服务器生效）')
+      if (r?.success) addLog('success', `${configFile} 已保存（重启服务器生效）`)
       else addLog('error', '保存失败: ' + (r?.error || ''))
     } catch (e: any) {
       addLog('error', '保存失败: ' + (e?.message || e))
@@ -848,8 +851,19 @@ export default function ServerConsolePage() {
               {/* 设置 Tab */}
               {activeTab === 'settings' && (
                 <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-900 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold text-gray-500">server.properties（修改后需重启服务器生效）</div>
+                  <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={configFile}
+                        onChange={e => { setConfigFile(e.target.value); loadProperties(e.target.value) }}
+                        className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {CONFIG_FILES.map(f => (
+                          <option key={f} value={f}>{f}</option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-gray-400">（{configFile}）</span>
+                    </div>
                     <button onClick={saveProperties}
                       className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
                       保存设置
@@ -861,7 +875,13 @@ export default function ServerConsolePage() {
                     className="flex-1 w-full font-mono text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                   />
                   <div className="text-[11px] text-gray-400 mt-2">
-                    常用项：motd=服务器名 · difficulty=难度(easy/normal/hard/peaceful) · gamemode=模式(survival/creative) · pvp=true/false · max-players=最大人数 · online-mode=正版验证 · view-distance=视距
+                    {configFile === 'server.properties' ? (
+                      <>常用项：motd=服务器名 · difficulty=难度 · gamemode=模式 · pvp=true/false · max-players=最大人数 · online-mode=正版验证 · view-distance=视距</>
+                    ) : configFile.endsWith('.json') ? (
+                      <>JSON 格式：whitelist.json/ops.json/banned-players.json 等名单文件，保存后执行对应命令刷新（如 /whitelist reload）</>
+                    ) : (
+                      <>YAML 格式：bukkit/spigot/paper 配置，保存后重启服务器生效</>
+                    )}
                   </div>
                 </div>
               )}
