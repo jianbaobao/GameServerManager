@@ -11,6 +11,7 @@ import HomePage from '@/pages/HomePage'
 import TerminalPage from '@/pages/TerminalPage'
 import InstanceManagerPage from '@/pages/InstanceManagerPage'
 import GameDeploymentPage from './pages/GameDeploymentPage'
+import ServerConsolePage from '@/pages/ServerConsolePage'
 import ScheduledTasksPage from '@/pages/ScheduledTasksPage'
 import SettingsPage from '@/pages/SettingsPage'
 import PluginsPage from '@/pages/PluginsPage'
@@ -150,6 +151,7 @@ function App() {
                         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
                         <Route path="/terminal" element={<PageTransition><TerminalPage /></PageTransition>} />
                         <Route path="/instances" element={<PageTransition><InstanceManagerPage /></PageTransition>} />
+                        <Route path="/console" element={<PageTransition><ServerConsolePage /></PageTransition>} />
                         <Route path="/game-deployment" element={<PageTransition><GameDeploymentPage /></PageTransition>} />
                         <Route path="/scheduled-tasks" element={<PageTransition><ScheduledTasksPage /></PageTransition>} />
                         <Route path="/files" element={<PageTransition><FileManagerPage /></PageTransition>} />

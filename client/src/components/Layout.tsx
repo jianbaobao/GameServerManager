@@ -69,6 +69,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigation = [
     { name: '首页', href: '/', icon: Home },
     { name: '终端', href: '/terminal', icon: Terminal },
+    { name: '服主控制台', href: '/console', icon: Gamepad2 },
     { name: '实例管理', href: '/instances', icon: Server },
     { name: '游戏部署', href: '/game-deployment', icon: Download },
     { name: '定时任务', href: '/scheduled-tasks', icon: Clock },
