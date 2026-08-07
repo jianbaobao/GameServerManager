@@ -121,6 +121,277 @@ const COMMON_QUICK_CMDS = [
   { label: '当前目录', cmd: 'pwd && ls -la' },
 ]
 
+// ============ 各游戏专属控制台面板配置 ============
+interface GamePanel {
+  key: string[]                // 匹配关键词（gameKey/实例名小写包含）
+  label: string
+  icon: string
+  buttons: { label: string; icon: string; cmd: string; color: string }[]
+  playerOps: { label: string; cmd: (n: string) => string; color: string }[]
+  announce: (t: string) => string
+  modes?: { label: string; icon: string; cmd: string }[]      // 模式/选项选择
+  maps?: { label: string; cmd: string }[]                      // 地图选择
+}
+
+const GAME_PANELS: GamePanel[] = [
+  {
+    key: ['minecraft', '我的世界', 'mc'],
+    label: '我的世界',
+    icon: '⛏️',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: '/save-all', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: '/list', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '设为白天', icon: '☀️', cmd: '/time set day', color: 'bg-amber-500 hover:bg-amber-600' },
+      { label: '设为夜晚', icon: '🌙', cmd: '/time set night', color: 'bg-indigo-400 hover:bg-indigo-500' },
+      { label: '晴朗天气', icon: '🌤', cmd: '/weather clear', color: 'bg-sky-500 hover:bg-sky-600' },
+      { label: '下雨天气', icon: '🌧', cmd: '/weather rain', color: 'bg-cyan-600 hover:bg-cyan-700' },
+      { label: '全员创造', icon: '🛠', cmd: '/gamemode creative @a', color: 'bg-purple-500 hover:bg-purple-600' },
+      { label: '全员生存', icon: '⚔️', cmd: '/gamemode survival @a', color: 'bg-emerald-500 hover:bg-emerald-600' },
+      { label: '全员冒险', icon: '🗺', cmd: '/gamemode adventure @a', color: 'bg-teal-500 hover:bg-teal-600' },
+      { label: '全员旁观', icon: '👁', cmd: '/gamemode spectator @a', color: 'bg-slate-500 hover:bg-slate-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `/kick ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `/ban ${n}`, color: 'bg-red-500 hover:bg-red-600' },
+      { label: '设为管理员', cmd: n => `/op ${n}`, color: 'bg-purple-500 hover:bg-purple-600' },
+      { label: '解除管理员', cmd: n => `/deop ${n}`, color: 'bg-violet-500 hover:bg-violet-600' },
+    ],
+    announce: t => `/say ${t}`,
+    modes: [
+      { label: '和平', icon: '🕊', cmd: '/difficulty peaceful' },
+      { label: '简单', icon: '😊', cmd: '/difficulty easy' },
+      { label: '普通', icon: '😐', cmd: '/difficulty normal' },
+      { label: '困难', icon: '💀', cmd: '/difficulty hard' },
+    ],
+  },
+  {
+    key: ['palworld', '幻兽帕鲁'],
+    label: '幻兽帕鲁',
+    icon: '🐾',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: '/save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: '/showplayers', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '服务器信息', icon: 'ℹ️', cmd: '/info', color: 'bg-teal-500 hover:bg-teal-600' },
+      { label: '停止服务器', icon: '⏹', cmd: '/stop', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `/kickplayer ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `/banplayer ${n}`, color: 'bg-red-500 hover:bg-red-600' },
+      { label: '解封玩家', cmd: n => `/unbanplayer ${n}`, color: 'bg-green-500 hover:bg-green-600' },
+    ],
+    announce: t => `/broadcast ${t}`,
+  },
+  {
+    key: ['rust'],
+    label: '腐蚀(Rust)',
+    icon: '🔧',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'server.save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'playerlist', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '天气转晴', icon: '🌤', cmd: 'weather.clear', color: 'bg-sky-500 hover:bg-sky-600' },
+      { label: '服务器信息', icon: 'ℹ️', cmd: 'serverinfo', color: 'bg-teal-500 hover:bg-teal-600' },
+      { label: '停止服务器', icon: '⏹', cmd: 'server.stop', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick "${n}" 被管理员移除`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `ban "${n}" 违规封禁`, color: 'bg-red-500 hover:bg-red-600' },
+      { label: '解封玩家', cmd: n => `unban "${n}"`, color: 'bg-green-500 hover:bg-green-600' },
+    ],
+    announce: t => `say ${t}`,
+  },
+  {
+    key: ['7_days', '7 days', '七日杀', '7dtd'],
+    label: '七日杀',
+    icon: '🧟',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'saveworld', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'listplayers', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '停机维护', icon: '🛠', cmd: 'shutdown', color: 'bg-red-500 hover:bg-red-600' },
+      { label: '血月测试', icon: '🌕', cmd: 'buffplayers 1 7thday', color: 'bg-purple-500 hover:bg-purple-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick ${n} 被管理员移除`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `ban ${n} 违规封禁`, color: 'bg-red-500 hover:bg-red-600' },
+      { label: '解封玩家', cmd: n => `unban ${n}`, color: 'bg-green-500 hover:bg-green-600' },
+    ],
+    announce: t => `say ${t}`,
+    modes: [
+      { label: '白天', icon: '☀️', cmd: 'settime day' },
+      { label: '夜晚', icon: '🌙', cmd: 'settime night' },
+      { label: '黄昏', icon: '🌆', cmd: 'settime dusk' },
+    ],
+  },
+  {
+    key: ['ark', '方舟'],
+    label: '方舟生存进化',
+    icon: '🦖',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'saveworld', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'listplayers', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '服务器设置', icon: '⚙️', cmd: 'getoptions', color: 'bg-teal-500 hover:bg-teal-600' },
+      { label: '关闭服务器', icon: '⏹', cmd: 'doexit', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kickplayer ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `banplayer ${n}`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `broadcast ${t}`,
+  },
+  {
+    key: ['counter', 'cs2', 'csgo', 'cs:go', '反恐精英'],
+    label: '反恐精英2',
+    icon: '🎯',
+    buttons: [
+      { label: '重启回合', icon: '🔄', cmd: 'mp_restartgame 5', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '全员冻结', icon: '❄️', cmd: 'mp_freeze_time 15', color: 'bg-cyan-500 hover:bg-cyan-600' },
+      { label: '解除冻结', icon: '🔥', cmd: 'mp_freeze_time 0', color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '机器人5个', icon: '🤖', cmd: 'bot_quota 5', color: 'bg-gray-500 hover:bg-gray-600' },
+      { label: '机器人关闭', icon: '🚫', cmd: 'bot_quota 0', color: 'bg-gray-700 hover:bg-gray-800' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `banid 0 "${n}"`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `say ${t}`,
+    maps: [
+      { label: '荒漠迷城 de_dust2', cmd: 'changelevel de_dust2' },
+      { label: '炙热沙城 de_mirage', cmd: 'changelevel de_mirage' },
+      { label: '炼狱小镇 de_inferno', cmd: 'changelevel de_inferno' },
+      { label: '核子危机 de_nuke', cmd: 'changelevel de_nuke' },
+      { label: '死亡游乐园 de_overpass', cmd: 'changelevel de_overpass' },
+    ],
+  },
+  {
+    key: ['l4d2', 'left_4_dead', '求生之路'],
+    label: '求生之路2',
+    icon: '🧟',
+    buttons: [
+      { label: '重启回合', icon: '🔄', cmd: 'mp_restartgame 5', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '查看玩家', icon: '👥', cmd: 'status', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '下一张图', icon: '⏭', cmd: 'changelevel c2m1_highway', color: 'bg-teal-500 hover:bg-teal-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `banid 0 "${n}"`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `say ${t}`,
+    maps: [
+      { label: '第一章 死亡中心', cmd: 'changelevel c1m1_hotel' },
+      { label: '第二章 黑色狂欢节', cmd: 'changelevel c2m1_highway' },
+      { label: '第三章 沼泽激战', cmd: 'changelevel c3m1_plankcountry' },
+      { label: '第四章 暴风骤雨', cmd: 'changelevel c4m1_milltown_a' },
+      { label: '第五章 教区', cmd: 'changelevel c5m1_waterfront' },
+    ],
+  },
+  {
+    key: ['terraria', '泰拉瑞亚'],
+    label: '泰拉瑞亚',
+    icon: '⛏️',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'playing', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '设为白天', icon: '☀️', cmd: 'settime day', color: 'bg-amber-500 hover:bg-amber-600' },
+      { label: '设为夜晚', icon: '🌙', cmd: 'settime night', color: 'bg-indigo-400 hover:bg-indigo-500' },
+      { label: '停止服务器', icon: '⏹', cmd: 'exit', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick ${n} 被管理员移除`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `ban ${n} 违规封禁`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `say ${t}`,
+  },
+  {
+    key: ['dont_starve', 'dst', '饥荒'],
+    label: '饥荒联机版',
+    icon: '🔥',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'c_save()', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'c_listallplayers()', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '白天', icon: '☀️', cmd: 'c_settime(0.3)', color: 'bg-amber-500 hover:bg-amber-600' },
+      { label: '黄昏', icon: '🌆', cmd: 'c_settime(0.5)', color: 'bg-orange-400 hover:bg-orange-500' },
+      { label: '夜晚', icon: '🌙', cmd: 'c_settime(0.8)', color: 'bg-indigo-400 hover:bg-indigo-500' },
+      { label: '停止服务器', icon: '⏹', cmd: 'c_shutdown()', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `c_kick("${n}", "被管理员移除")`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `c_ban("${n}", "违规封禁")`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `c_announce("${t}")`,
+  },
+  {
+    key: ['unturned', '未转变者'],
+    label: '未转变者',
+    icon: '🔫',
+    buttons: [
+      { label: '在线玩家', icon: '👥', cmd: 'players', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '保存世界', icon: '💾', cmd: 'save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '关闭服务器', icon: '⏹', cmd: 'shutdown', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick ${n} 被管理员移除`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `ban ${n} 违规封禁`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `say ${t}`,
+  },
+  {
+    key: ['satisfactory', '幸福工厂'],
+    label: '幸福工厂',
+    icon: '🏭',
+    buttons: [
+      { label: '保存游戏', icon: '💾', cmd: 'SaveGame', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'ListPlayers', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '关闭服务器', icon: '⏹', cmd: 'Shutdown', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `KickPlayer "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
+    ],
+    announce: t => `Say "${t}"`,
+  },
+  {
+    key: ['zomboid', '僵尸毁灭工程'],
+    label: '僵尸毁灭工程',
+    icon: '🧟',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'players', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '停止服务器', icon: '⏹', cmd: 'quit', color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kickuser ${n} 被管理员移除`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `banuser ${n} 违规封禁`, color: 'bg-red-500 hover:bg-red-600' },
+    ],
+    announce: t => `servermsg "${t}"`,
+  },
+]
+
+// 通用面板（未匹配到专属游戏的默认）
+const GENERIC_PANEL: GamePanel = {
+  key: [],
+  label: '通用服务器',
+  icon: '🖥',
+  buttons: [
+    { label: '查看内存', icon: '📊', cmd: 'free -h', color: 'bg-gray-500 hover:bg-gray-600' },
+    { label: '磁盘空间', icon: '💽', cmd: 'df -h', color: 'bg-gray-500 hover:bg-gray-600' },
+    { label: '运行时长', icon: '⏱', cmd: 'uptime', color: 'bg-gray-500 hover:bg-gray-600' },
+  ],
+  playerOps: [
+    { label: '踢出玩家', cmd: n => `kick "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
+    { label: '封禁玩家', cmd: n => `ban "${n}"`, color: 'bg-red-500 hover:bg-red-600' },
+  ],
+  announce: t => `say ${t}`,
+}
+
+function matchGamePanel(selected: Instance | null): GamePanel {
+  if (!selected) return GENERIC_PANEL
+  const key = ((selected.gameKey || '') + ' ' + (selected.name || '')).toLowerCase()
+  for (const panel of GAME_PANELS) {
+    if (panel.key.some(k => key.includes(k.toLowerCase()))) {
+      return panel
+    }
+  }
+  return GENERIC_PANEL
+}
+
 export default function ServerConsolePage() {
   const { addNotification } = useNotificationStore()
   const [instances, setInstances] = useState<Instance[]>([])
@@ -177,6 +448,8 @@ export default function ServerConsolePage() {
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
   }, [logs])
+
+  const panel = matchGamePanel(selected)
 
   useEffect(() => {
     if (!selected) return
@@ -238,45 +511,11 @@ export default function ServerConsolePage() {
     setTimeout(() => runAction('start', '启动'), 800)
   }
 
-  // 一键常用操作（无需命令）
-  const quickActions = () => {
-    const base: { label: string; icon: string; cmd: string; color: string; always?: boolean }[] = []
-    if (showMc) {
-      base.push(
-        { label: '保存世界', icon: '💾', cmd: '/save-all', color: 'bg-blue-500 hover:bg-blue-600' },
-        { label: '在线玩家', icon: '👥', cmd: '/list', color: 'bg-indigo-500 hover:bg-indigo-600' },
-        { label: '设为白天', icon: '☀️', cmd: '/time set day', color: 'bg-amber-500 hover:bg-amber-600' },
-        { label: '晴朗天气', icon: '🌤', cmd: '/weather clear', color: 'bg-sky-500 hover:bg-sky-600' },
-        { label: '全员创造', icon: '🛠', cmd: '/gamemode creative @a', color: 'bg-purple-500 hover:bg-purple-600' },
-        { label: '全员生存', icon: '⚔️', cmd: '/gamemode survival @a', color: 'bg-emerald-500 hover:bg-emerald-600' },
-      )
-    }
-    base.push(
-      { label: '查看内存', icon: '📊', cmd: 'free -h', color: 'bg-gray-500 hover:bg-gray-600' },
-      { label: '磁盘空间', icon: '💽', cmd: 'df -h', color: 'bg-gray-500 hover:bg-gray-600' },
-      { label: '运行时长', icon: '⏱', cmd: 'uptime', color: 'bg-gray-500 hover:bg-gray-600' },
-    )
-    return base
-  }
+  // 一键常用操作（按游戏面板定制）
+  const quickActions = () => panel.buttons
 
-  // 玩家操作按钮
-  const playerOps = () => {
-    const ops: { label: string; cmd: (n: string) => string; color: string; confirm?: string }[] = []
-    if (showMc) {
-      ops.push(
-        { label: '踢出玩家', cmd: n => `/kick ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
-        { label: '封禁玩家', cmd: n => `/ban ${n}`, color: 'bg-red-500 hover:bg-red-600' },
-        { label: '设为管理员', cmd: n => `/op ${n}`, color: 'bg-purple-500 hover:bg-purple-600' },
-        { label: '解除管理员', cmd: n => `/deop ${n}`, color: 'bg-violet-500 hover:bg-violet-600' },
-      )
-    } else {
-      ops.push(
-        { label: '踢出玩家', cmd: n => `kick "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
-        { label: '封禁玩家', cmd: n => `ban "${n}"`, color: 'bg-red-500 hover:bg-red-600' },
-      )
-    }
-    return ops
-  }
+  // 玩家操作按钮（按游戏面板定制）
+  const playerOps = () => panel.playerOps
 
   const doPlayerOp = (op: { label: string; cmd: (n: string) => string }) => {
     const name = playerName.trim()
@@ -291,11 +530,7 @@ export default function ServerConsolePage() {
   const sendAnnounce = () => {
     const text = announceText.trim()
     if (!text) { addLog('error', '请先填写公告内容'); return }
-    let cmd = ''
-    if (showMc) cmd = `/say ${text}`
-    else if ((selected?.gameKey || '').toLowerCase().includes('palworld')) cmd = `/broadcast ${text}`
-    else cmd = `say ${text}`
-    sendCommand(cmd, '发送公告')
+    sendCommand(panel.announce(text), '发送公告')
     setAnnounceText('')
   }
 
@@ -408,9 +643,11 @@ export default function ServerConsolePage() {
                 </div>
               </div>
 
-              {/* 一键操作 */}
+              {/* 一键操作（按游戏定制） */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="text-xs font-semibold text-gray-500 mb-2">一键操作（点一下就行）</div>
+                <div className="text-xs font-semibold text-gray-500 mb-2">
+                  {panel.icon} {panel.label} · 一键操作（点一下就行）
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {quickActions().map(q => (
                     <button key={q.label} onClick={() => sendCommand(q.cmd, q.label)}
@@ -419,11 +656,37 @@ export default function ServerConsolePage() {
                     </button>
                   ))}
                 </div>
+                {panel.modes && panel.modes.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold text-gray-400 mb-2">⚙️ 模式 / 选项</div>
+                    <div className="flex flex-wrap gap-2">
+                      {panel.modes.map(m => (
+                        <button key={m.label} onClick={() => sendCommand(m.cmd, m.label)}
+                          className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                          {m.icon} {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {panel.maps && panel.maps.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold text-gray-400 mb-2">🗺 地图选择</div>
+                    <div className="flex flex-wrap gap-2">
+                      {panel.maps.map(m => (
+                        <button key={m.label} onClick={() => sendCommand(m.cmd, '切换地图')}
+                          className="px-3 py-1.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 text-xs hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 玩家管理 */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="text-xs font-semibold text-gray-500 mb-2">👤 玩家管理</div>
+                <div className="text-xs font-semibold text-gray-500 mb-2">👤 玩家管理（{panel.label}）</div>
                 <div className="flex gap-2 flex-wrap items-center">
                   <input
                     value={playerName}
@@ -443,7 +706,7 @@ export default function ServerConsolePage() {
 
               {/* 公告 */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="text-xs font-semibold text-gray-500 mb-2">📢 服务器公告</div>
+                <div className="text-xs font-semibold text-gray-500 mb-2">📢 {panel.label} 服务器公告</div>
                 <div className="flex gap-2">
                   <input
                     value={announceText}
