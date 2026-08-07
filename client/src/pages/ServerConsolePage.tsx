@@ -128,15 +128,17 @@ export default function ServerConsolePage() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<any>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
-  const [cmdInput, setCmdInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const [playerName, setPlayerName] = useState('')
+  const [announceText, setAnnounceText] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const logRef = useRef<HTMLDivElement>(null)
   const [showMc, setShowMc] = useState(false)
 
   const selected = instances.find(i => i.id === selectedId) || null
 
   const addLog = useCallback((type: LogEntry['type'], text: string) => {
-    setLogs(prev => [...prev.slice(-199), { time: new Date().toLocaleTimeString(), type, text }])
+    setLogs(prev => [...prev.slice(-99), { time: new Date().toLocaleTimeString(), type, text }])
     if (type === 'error') {
       addNotification({ type: 'error', title: '操作失败', message: text, duration: 4000 })
     }
@@ -186,19 +188,23 @@ export default function ServerConsolePage() {
     setShowMc(!!isMc)
   }, [selected])
 
-  const gameCmds = useCallback((): { label: string; cmd: string }[] => {
-    if (!selected) return []
-    if (showMc) return GAME_QUICK_CMDS.minecraft || []
-    // 按 gameKey / 实例名匹配游戏专属指令
-    const key = (selected.gameKey || '') + ' ' + (selected.name || '')
-    for (const gk of Object.keys(GAME_QUICK_CMDS)) {
-      if (gk === 'minecraft') continue
-      if (key.toLowerCase().includes(gk.toLowerCase())) {
-        return GAME_QUICK_CMDS[gk] || []
+  const isRunning = selected?.status === 'running' || status?.data?.status === 'running'
+
+  const sendCommand = async (command: string, label?: string) => {
+    if (!command || !selectedId) return
+    addLog('command', (label ? label + ': ' : '') + command)
+    try {
+      const res: any = await apiClient.post(`/instances/${selectedId}/input`, { input: command })
+      const r = res.data || res
+      if (r?.success === false) {
+        addLog('error', '操作失败: ' + (r.message || r.error || ''))
+      } else {
+        addLog('success', '操作已执行')
       }
+    } catch (e: any) {
+      addLog('error', '操作失败: ' + (e?.response?.data?.message || e?.message || e))
     }
-    return []
-  }, [selected, showMc])
+  }
 
   const runAction = async (action: 'start' | 'stop', label: string) => {
     if (!selectedId || busy) return
@@ -222,27 +228,75 @@ export default function ServerConsolePage() {
     }
   }
 
+  const togglePower = () => {
+    if (isRunning) runAction('stop', '停止')
+    else runAction('start', '启动')
+  }
+
   const restart = async () => {
     await runAction('stop', '停止')
     setTimeout(() => runAction('start', '启动'), 800)
   }
 
-  const sendCommand = async (cmd?: string) => {
-    const command = (cmd !== undefined ? cmd : cmdInput).trim()
-    if (!command || !selectedId) return
-    setCmdInput('')
-    addLog('command', '> ' + command)
-    try {
-      const res: any = await apiClient.post(`/instances/${selectedId}/input`, { input: command })
-      const r = res.data || res
-      if (r?.success === false) {
-        addLog('error', '命令执行失败: ' + (r.message || r.error || ''))
-      } else {
-        addLog('success', '命令已发送到服务器控制台')
-      }
-    } catch (e: any) {
-      addLog('error', '命令发送失败: ' + (e?.response?.data?.message || e?.message || e))
+  // 一键常用操作（无需命令）
+  const quickActions = () => {
+    const base: { label: string; icon: string; cmd: string; color: string; always?: boolean }[] = []
+    if (showMc) {
+      base.push(
+        { label: '保存世界', icon: '💾', cmd: '/save-all', color: 'bg-blue-500 hover:bg-blue-600' },
+        { label: '在线玩家', icon: '👥', cmd: '/list', color: 'bg-indigo-500 hover:bg-indigo-600' },
+        { label: '设为白天', icon: '☀️', cmd: '/time set day', color: 'bg-amber-500 hover:bg-amber-600' },
+        { label: '晴朗天气', icon: '🌤', cmd: '/weather clear', color: 'bg-sky-500 hover:bg-sky-600' },
+        { label: '全员创造', icon: '🛠', cmd: '/gamemode creative @a', color: 'bg-purple-500 hover:bg-purple-600' },
+        { label: '全员生存', icon: '⚔️', cmd: '/gamemode survival @a', color: 'bg-emerald-500 hover:bg-emerald-600' },
+      )
     }
+    base.push(
+      { label: '查看内存', icon: '📊', cmd: 'free -h', color: 'bg-gray-500 hover:bg-gray-600' },
+      { label: '磁盘空间', icon: '💽', cmd: 'df -h', color: 'bg-gray-500 hover:bg-gray-600' },
+      { label: '运行时长', icon: '⏱', cmd: 'uptime', color: 'bg-gray-500 hover:bg-gray-600' },
+    )
+    return base
+  }
+
+  // 玩家操作按钮
+  const playerOps = () => {
+    const ops: { label: string; cmd: (n: string) => string; color: string; confirm?: string }[] = []
+    if (showMc) {
+      ops.push(
+        { label: '踢出玩家', cmd: n => `/kick ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
+        { label: '封禁玩家', cmd: n => `/ban ${n}`, color: 'bg-red-500 hover:bg-red-600' },
+        { label: '设为管理员', cmd: n => `/op ${n}`, color: 'bg-purple-500 hover:bg-purple-600' },
+        { label: '解除管理员', cmd: n => `/deop ${n}`, color: 'bg-violet-500 hover:bg-violet-600' },
+      )
+    } else {
+      ops.push(
+        { label: '踢出玩家', cmd: n => `kick "${n}"`, color: 'bg-orange-500 hover:bg-orange-600' },
+        { label: '封禁玩家', cmd: n => `ban "${n}"`, color: 'bg-red-500 hover:bg-red-600' },
+      )
+    }
+    return ops
+  }
+
+  const doPlayerOp = (op: { label: string; cmd: (n: string) => string }) => {
+    const name = playerName.trim()
+    if (!name) {
+      addLog('error', '请先填写玩家名称')
+      return
+    }
+    sendCommand(op.cmd(name), op.label)
+    setPlayerName('')
+  }
+
+  const sendAnnounce = () => {
+    const text = announceText.trim()
+    if (!text) { addLog('error', '请先填写公告内容'); return }
+    let cmd = ''
+    if (showMc) cmd = `/say ${text}`
+    else if ((selected?.gameKey || '').toLowerCase().includes('palworld')) cmd = `/broadcast ${text}`
+    else cmd = `say ${text}`
+    sendCommand(cmd, '发送公告')
+    setAnnounceText('')
   }
 
   const typeLabel = (t?: string) => {
@@ -254,32 +308,33 @@ export default function ServerConsolePage() {
     return (t && map[t]) || t || '通用'
   }
 
-  const statusColor = (s?: string) => {
-    const map: Record<string, string> = {
-      'running': 'bg-green-500',
-      'starting': 'bg-yellow-500 animate-pulse',
-      'stopping': 'bg-orange-500 animate-pulse',
-      'stopped': 'bg-gray-400',
-      'error': 'bg-red-500',
+  const statusInfo = () => {
+    const s = status?.data?.status || selected?.status || 'stopped'
+    const map: Record<string, { text: string; dot: string; card: string }> = {
+      'running': { text: '● 运行中', dot: 'bg-green-500', card: 'border-green-500 bg-green-50 dark:bg-green-950/30' },
+      'starting': { text: '◐ 启动中...', dot: 'bg-yellow-500 animate-pulse', card: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30' },
+      'stopping': { text: '◐ 停止中...', dot: 'bg-orange-500 animate-pulse', card: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30' },
+      'error': { text: '✕ 异常', dot: 'bg-red-500', card: 'border-red-500 bg-red-50 dark:bg-red-950/30' },
+      'stopped': { text: '○ 已停止', dot: 'bg-gray-400', card: 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900' },
     }
-    return (s && map[s]) || 'bg-gray-400'
+    return map[s] || map['stopped']
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 bg-white dark:bg-gray-900">
-        <h1 className="text-xl font-bold">{PAGE_TITLE}</h1>
-        <p className="text-sm text-gray-500 mt-0.5">集中管理所有游戏服务器：启动 / 停止 / 控制台命令，我的世界专属快捷指令</p>
+        <h1 className="text-xl font-bold">服主便携控制后台</h1>
+        <p className="text-sm text-gray-500 mt-0.5">简单可视化操作：点按钮就能管理服务器，无需输入命令</p>
       </div>
 
       <div className="flex h-[calc(100vh-140px)]">
         {/* 左侧实例列表 */}
-        <div className="w-72 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-y-auto p-3 space-y-2">
-          <div className="text-xs text-gray-500 font-semibold px-2 py-1">实例列表 ({instances.length})</div>
+        <div className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-y-auto p-3 space-y-2">
+          <div className="text-xs text-gray-500 font-semibold px-2 py-1">我的服务器 ({instances.length})</div>
           {loading && <div className="text-sm text-gray-400 p-2">加载中...</div>}
           {!loading && instances.length === 0 && (
             <div className="text-sm text-gray-400 p-2">
-              暂无实例，请先到 <span className="text-blue-500">游戏部署</span> 或 <span className="text-blue-500">实例管理</span> 创建服务器
+              还没有服务器实例，先到 <span className="text-blue-500">游戏部署</span> 或 <span className="text-blue-500">实例管理</span> 创建一个吧
             </div>
           )}
           {instances.map(inst => (
@@ -293,128 +348,153 @@ export default function ServerConsolePage() {
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusColor(inst.status)}`} />
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${inst.status === 'running' ? 'bg-green-500' : inst.status === 'error' ? 'bg-red-500' : 'bg-gray-400'}`} />
                 <span className="font-medium text-sm truncate">{inst.name}</span>
               </div>
-              <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                <span>{typeLabel(inst.instanceType)}</span>
-                {inst.gameVersion && <span className="text-blue-400">v{inst.gameVersion}</span>}
-              </div>
-              <div className="text-[11px] text-gray-400 truncate mt-0.5">{inst.workingDirectory}</div>
+              <div className="text-xs text-gray-500 mt-1">{typeLabel(inst.instanceType)}{inst.gameVersion ? ' · v' + inst.gameVersion : ''}</div>
             </button>
           ))}
         </div>
 
-        {/* 右侧控制台 */}
+        {/* 右侧操作区 */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {!selected ? (
             <div className="flex-1 flex items-center justify-center text-gray-400">
-              请选择左侧实例开始管理
+              请先在左侧选择要管理的服务器
             </div>
           ) : (
             <>
-              {/* 状态卡片 */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-3 h-3 rounded-full ${statusColor(selected.status)}`} />
-                    <h2 className="text-lg font-semibold">{selected.name}</h2>
-                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-                      {status?.data?.status || selected.status}
+              {/* 状态 + 大开关 */}
+              <div className={`p-5 border-b-2 ${statusInfo().card}`}>
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3 h-3 rounded-full ${statusInfo().dot}`} />
+                      <h2 className="text-lg font-semibold">{selected.name}</h2>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{statusInfo().text}</span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1.5">
+                      {typeLabel(selected.instanceType)} · 端口信息见实例管理页
+                    </div>
+                  </div>
+                  {/* 大电源开关 */}
+                  <button
+                    onClick={togglePower}
+                    disabled={busy || selected.status === 'starting' || selected.status === 'stopping'}
+                    className={`relative w-28 h-14 rounded-full transition-all shadow-lg ${
+                      isRunning ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 hover:bg-gray-500'
+                    } disabled:opacity-50 flex items-center justify-center text-white font-bold text-sm`}
+                  >
+                    <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-2xl ${isRunning ? '' : 'opacity-50'}`}>
+                      {isRunning ? '⏹' : '▶'}
                     </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => runAction('start', '启动')} disabled={busy || selected.status === 'running'}
-                      className="px-4 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white transition-colors">
-                      ▶ 启动
-                    </button>
-                    <button onClick={() => runAction('stop', '停止')} disabled={busy || selected.status !== 'running'}
-                      className="px-4 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white transition-colors">
-                      ⏹ 停止
-                    </button>
-                    <button onClick={restart} disabled={busy}
-                      className="px-4 py-1.5 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white transition-colors">
-                      🔄 重启
-                    </button>
-                  </div>
+                    <span className="ml-8">{isRunning ? '停止' : '启动'}</span>
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5">
-                    <div className="text-xs text-gray-500">工作目录</div>
-                    <div className="font-mono text-xs mt-0.5 truncate">{selected.workingDirectory}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5">
-                    <div className="text-xs text-gray-500">启动命令</div>
-                    <div className="font-mono text-xs mt-0.5 truncate">{selected.startCommand || '-'}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5">
-                    <div className="text-xs text-gray-500">PID</div>
-                    <div className="font-mono text-xs mt-0.5">{selected.pid || status?.data?.pid || '-'}</div>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5">
-                    <div className="text-xs text-gray-500">类型</div>
-                    <div className="text-xs mt-0.5">{typeLabel(selected.instanceType)}</div>
-                  </div>
+                {/* 操作按钮行 */}
+                <div className="flex gap-2 mt-4 flex-wrap">
+                  <button onClick={() => runAction('start', '启动')} disabled={busy || isRunning}
+                    className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-sm font-medium">
+                    ▶ 启动
+                  </button>
+                  <button onClick={() => runAction('stop', '停止')} disabled={busy || !isRunning}
+                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white text-sm font-medium">
+                    ⏹ 停止
+                  </button>
+                  <button onClick={restart} disabled={busy}
+                    className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white text-sm font-medium">
+                    🔄 重启
+                  </button>
                 </div>
               </div>
 
-              {/* 快捷命令 */}
-              <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-x-auto">
-                {gameCmds().length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold text-green-600 dark:text-green-400 mb-2">
-                      {showMc ? '⛏ 我的世界服主快捷指令' : '🎮 本游戏开服快捷指令'}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {gameCmds().map(q => (
-                        <button key={q.label} onClick={() => sendCommand(q.cmd)}
-                          className="text-xs px-3 py-1.5 rounded-md bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
-                          {q.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="text-xs font-semibold text-gray-500 mb-2">通用运维命令</div>
+              {/* 一键操作 */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="text-xs font-semibold text-gray-500 mb-2">一键操作（点一下就行）</div>
                 <div className="flex flex-wrap gap-2">
-                  {COMMON_QUICK_CMDS.map(q => (
-                    <button key={q.label} onClick={() => sendCommand(q.cmd)}
-                      className="text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                      {q.label}
+                  {quickActions().map(q => (
+                    <button key={q.label} onClick={() => sendCommand(q.cmd, q.label)}
+                      className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors ${q.color}`}>
+                      {q.icon} {q.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* 控制台输出 */}
-              <div className="flex-1 overflow-y-auto bg-black text-green-400 font-mono text-sm p-4 space-y-1" ref={logRef}>
-                {logs.length === 0 && <div className="text-gray-500">等待操作... 输入命令或点击快捷按钮开始</div>}
-                {logs.map((log, i) => (
-                  <div key={i} className={
-                    log.type === 'error' ? 'text-red-400'
-                    : log.type === 'success' ? 'text-green-300'
-                    : log.type === 'command' ? 'text-yellow-300'
-                    : log.type === 'output' ? 'text-gray-300'
-                    : 'text-gray-400'
-                  }>
-                    <span className="text-gray-600">[{log.time}]</span> {log.text}
-                  </div>
-                ))}
+              {/* 玩家管理 */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="text-xs font-semibold text-gray-500 mb-2">👤 玩家管理</div>
+                <div className="flex gap-2 flex-wrap items-center">
+                  <input
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && playerOps().length) doPlayerOp(playerOps()[0]) }}
+                    placeholder={showMc ? '输入玩家名称（如 Steve）' : '输入玩家名称'}
+                    className="w-48 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {playerOps().map(op => (
+                    <button key={op.label} onClick={() => doPlayerOp(op)}
+                      className={`px-3 py-2 rounded-lg text-white text-xs font-medium transition-colors ${op.color}`}>
+                      {op.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* 命令输入 */}
-              <div className="p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-2">
-                <input
-                  value={cmdInput}
-                  onChange={e => setCmdInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') sendCommand() }}
-                  placeholder={showMc ? '输入我的世界指令，如 /list 或服务器命令...' : '输入服务器控制台命令...'}
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button onClick={() => sendCommand()}
-                  className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">
-                  发送
+              {/* 公告 */}
+              <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="text-xs font-semibold text-gray-500 mb-2">📢 服务器公告</div>
+                <div className="flex gap-2">
+                  <input
+                    value={announceText}
+                    onChange={e => setAnnounceText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') sendAnnounce() }}
+                    placeholder="输入公告内容，如：服务器将于 20:00 重启"
+                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button onClick={sendAnnounce}
+                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                    发送公告
+                  </button>
+                </div>
+              </div>
+
+              {/* 操作记录 + 高级命令 */}
+              <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto bg-black text-green-400 font-mono text-xs p-3 space-y-1">
+                  {logs.length === 0 && <div className="text-gray-500">操作记录会显示在这里</div>}
+                  {logs.map((log, i) => (
+                    <div key={i} className={
+                      log.type === 'error' ? 'text-red-400'
+                      : log.type === 'success' ? 'text-green-300'
+                      : log.type === 'command' ? 'text-yellow-300'
+                      : 'text-gray-400'
+                    }>
+                      <span className="text-gray-600">[{log.time}]</span> {log.text}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-left">
+                  {showAdvanced ? '▾ 收起高级命令' : '▸ 高级命令（手动输入）'}
                 </button>
+                {showAdvanced && (
+                  <div className="p-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-2">
+                    <input
+                      id="adv-cmd-input"
+                      placeholder={showMc ? '输入命令，如 /list' : '输入命令，如 free -h'}
+                      className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onKeyDown={e => { if (e.key === 'Enter') { const v = (e.target as HTMLInputElement).value.trim(); if (v) { sendCommand(v); (e.target as HTMLInputElement).value = '' } } }}
+                    />
+                    <button onClick={() => {
+                      const el = document.getElementById('adv-cmd-input') as HTMLInputElement
+                      const v = el?.value?.trim()
+                      if (v) { sendCommand(v); el.value = '' }
+                    }} className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium">
+                      发送
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
