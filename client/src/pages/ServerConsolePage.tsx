@@ -3,6 +3,7 @@ import apiClient from '@/utils/api'
 import type { Instance } from '@/types'
 import { useNotificationStore } from '@/stores/notificationStore'
 
+const MARKER_XYZ123 = true // probe
 const PAGE_TITLE = '服主便携控制后台'
 
 interface LogEntry {
@@ -828,7 +829,11 @@ export default function ServerConsolePage() {
                   { key: 'settings', label: '⚙️ 服务器设置' },
                   { key: 'backups', label: '💾 世界备份' },
                 ] as const).map(t => (
-                  <button key={t.key} onClick={() => setActiveTab(t.key)}
+                  <button key={t.key} onClick={() => {
+                    setActiveTab(t.key)
+                    if (t.key === 'settings') loadProperties()
+                    if (t.key === 'backups') loadBackups()
+                  }}
                     className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === t.key
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400'
