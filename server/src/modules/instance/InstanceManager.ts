@@ -517,7 +517,7 @@ export class InstanceManager extends EventEmitter {
           if (platform === 'win32' && javaPath.startsWith('"')) {
             startCommand = `& ${javaPath} -jar ${jarFile} nogui`
           } else {
-            startCommand = `${javaPath} -jar ${jarFile} nogui`
+            startCommand = `${javaPath} -Xmx1G -Xms512M -jar ${jarFile} nogui`
           }
           this.logger.info(`我的世界Java版自动生成启动命令: ${startCommand}`)
         }
