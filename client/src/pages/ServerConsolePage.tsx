@@ -583,8 +583,9 @@ export default function ServerConsolePage() {
     if (!selectedId) return
     try {
       const res: any = await apiClient.get(`/instances/${selectedId}/backups`)
-      const r = res.data || res
-      if (r?.success) setBackups(r.data || [])
+      const body = res && res.data
+      const list = body && body.success ? (body.data || []) : []
+      setBackups(list)
     } catch { /* 忽略 */ }
   }, [selectedId])
 
@@ -875,24 +876,23 @@ export default function ServerConsolePage() {
                       {backingUp ? '备份中...' : '+ 创建备份'}
                     </button>
                   </div>
-                  {backups.length === 0 ? (
-                    <div className="text-sm text-gray-400 text-center py-8">暂无备份，点击右上角"创建备份"</div>
-                  ) : (
-                    <div className="space-y-2 overflow-y-auto">
-                      {backups.map(b => (
-                        <div key={b.name} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                          <div>
-                            <div className="text-xs font-medium font-mono">{b.name}</div>
-                            <div className="text-[11px] text-gray-500">{fmtSize(b.size)} · {new Date(b.mtime).toLocaleString()}</div>
-                          </div>
-                          <button onClick={() => restoreBackup(b.name)}
-                            className="px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs">
-                            恢复
-                          </button>
+                  <div className="space-y-2 overflow-y-auto">
+                    {backups.map(b => (
+                      <div key={b.name} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                        <div>
+                          <div className="text-xs font-medium font-mono">{b.name}</div>
+                          <div className="text-[11px] text-gray-500">{fmtSize(b.size)} · {new Date(b.mtime).toLocaleString()}</div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <button onClick={() => restoreBackup(b.name)}
+                          className="px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs">
+                          恢复
+                        </button>
+                      </div>
+                    ))}
+                    {backups.length === 0 && (
+                      <div className="text-sm text-gray-400 text-center py-8">暂无备份，点击右上角"创建备份"</div>
+                    )}
+                  </div>
                 </div>
               )}
 
