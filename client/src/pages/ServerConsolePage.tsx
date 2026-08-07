@@ -135,6 +135,24 @@ interface GamePanel {
 
 const GAME_PANELS: GamePanel[] = [
   {
+    key: ['valheim', '英灵神殿'],
+    label: '英灵神殿',
+    icon: '⚔️',
+    buttons: [
+      { label: '保存世界', icon: '💾', cmd: 'save', color: 'bg-blue-500 hover:bg-blue-600' },
+      { label: '在线玩家', icon: '👥', cmd: 'players', color: 'bg-indigo-500 hover:bg-indigo-600' },
+      { label: '服务器信息', icon: 'ℹ️', cmd: 'info', color: 'bg-teal-500 hover:bg-teal-600' },
+      { label: '显示时间', icon: '🕐', cmd: 'time', color: 'bg-amber-500 hover:bg-amber-600' },
+      { label: '重启服务器', icon: '🔄', cmd: 'stop', color: 'bg-orange-500 hover:bg-orange-600' },
+    ],
+    playerOps: [
+      { label: '踢出玩家', cmd: n => `kick ${n}`, color: 'bg-orange-500 hover:bg-orange-600' },
+      { label: '封禁玩家', cmd: n => `ban ${n}`, color: 'bg-red-500 hover:bg-red-600' },
+      { label: '解封玩家', cmd: n => `unban ${n}`, color: 'bg-green-500 hover:bg-green-600' },
+    ],
+    announce: t => `say ${t}`,
+  },
+  {
     key: ['minecraft', '我的世界', 'mc'],
     label: '我的世界',
     icon: '⛏️',
