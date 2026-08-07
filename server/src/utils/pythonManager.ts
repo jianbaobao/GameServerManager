@@ -3,6 +3,7 @@ import { promisify } from 'util'
 import { exec } from 'child_process'
 import os from 'os'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 import logger from './logger.js'
 
@@ -89,6 +90,17 @@ export class PythonManager {
   public static callPythonScript(method: string, args: any[] = []): Promise<any> {
     return new Promise(async (resolve, reject) => {
       try {
+        // 检查 Python 脚本是否存在；不存在时对配置列表请求使用本地 fallback
+        if (!fs.existsSync(PYTHON_SCRIPT_PATH)) {
+          logger.warn(`Python脚本不存在: ${PYTHON_SCRIPT_PATH}，使用本地模板 fallback`)
+          if (method === 'get_available_configs') {
+            const templates = PythonManager.getLocalGameConfigs()
+            resolve({ success: true, data: templates })
+            return
+          }
+          reject(new Error(`Python脚本缺失: ${PYTHON_SCRIPT_PATH}（配置管理功能需重新安装脚本）`))
+          return
+        }
         // 动态获取可用的Python命令
         const pythonCommand = await this.getAvailablePythonCommand()
         logger.info(`使用Python命令: ${pythonCommand}`)
@@ -190,6 +202,31 @@ export class PythonManager {
    */
   public static async getAvailableConfigs(): Promise<any> {
     return await this.callPythonScript('get_available_configs')
+  }
+
+  /**
+   * 本地 fallback：扫描 data/gameconfig/*.yml 返回模板列表
+   */
+  public static getLocalGameConfigs(): any[] {
+    try {
+      const configDir = path.join(process.cwd(), 'data', 'gameconfig')
+      if (!fs.existsSync(configDir)) return []
+      const files = fs.readdirSync(configDir).filter(f => f.endsWith('.yml') || f.endsWith('.yaml'))
+      return files.map(f => {
+        const id = f.replace(/\.(yml|yaml)$/, '')
+        return {
+          id,
+          name: id,
+          game_name: id,
+          config_file: f,
+          parser: 'configobj',
+          source: 'local'
+        }
+      })
+    } catch (e: any) {
+      logger.warn('本地配置扫描失败: ' + e.message)
+      return []
+    }
   }
 
   /**
