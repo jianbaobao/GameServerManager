@@ -4,6 +4,7 @@ import { authenticateToken } from '../middleware/auth.js'
 import logger from '../utils/logger.js'
 import PythonManager from '../utils/pythonManager.js'
 import os from 'os'
+import fsSync from 'fs'
 import https from 'https'
 import http from 'http'
 import { promises as fs } from 'fs'
@@ -931,3 +932,171 @@ router.get('/steam-search', authenticateToken, async (req: Request, res: Respons
 
 
 export default router
+// ============ 服务器管理增强接口 ============
+
+// 读取服务器配置文件（server.properties / banned-players.json 等）
+router.get('/:id/server-config/:file', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!instanceManager) return res.status(500).json({ success: false, error: '实例管理器未初始化' })
+    const instance = instanceManager.getInstance(req.params.id)
+    if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
+    
+    const file = req.params.file
+    // 白名单允许的文件（防目录穿越）
+    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml']
+    if (!allowed.includes(file)) return res.status(400).json({ success: false, error: '不允许访问该文件' })
+    
+    const filePath = path.join(instance.workingDirectory, file)
+    if (!fsSync.existsSync(filePath)) {
+      return res.json({ success: true, data: { file, exists: false, content: '' } })
+    }
+    const content = await fs.readFile(filePath, 'utf-8')
+    res.json({ success: true, data: { file, exists: true, content } })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '读取配置失败', message: error.message })
+  }
+})
+
+// 保存服务器配置文件
+router.put('/:id/server-config/:file', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!instanceManager) return res.status(500).json({ success: false, error: '实例管理器未初始化' })
+    const instance = instanceManager.getInstance(req.params.id)
+    if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
+    
+    const file = req.params.file
+    const allowed = ['server.properties', 'banned-players.json', 'banned-ips.json', 'whitelist.json', 'ops.json', 'permissions.yml']
+    if (!allowed.includes(file)) return res.status(400).json({ success: false, error: '不允许访问该文件' })
+    
+    const { content } = req.body
+    if (typeof content !== 'string') return res.status(400).json({ success: false, error: '内容必须是字符串' })
+    
+    const filePath = path.join(instance.workingDirectory, file)
+    await fs.writeFile(filePath, content, 'utf-8')
+    res.json({ success: true, message: '配置已保存（重启服务器生效）' })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '保存配置失败', message: error.message })
+  }
+})
+
+// 创建世界备份（tar.gz）
+router.post('/:id/backup', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!instanceManager) return res.status(500).json({ success: false, error: '实例管理器未初始化' })
+    const instance = instanceManager.getInstance(req.params.id)
+    if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
+    
+    const backupsDir = path.join(instance.workingDirectory, '..', 'backups')
+    const backupName = 'backup-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.tar.gz'
+    await fs.mkdir(backupsDir, { recursive: true })
+    
+    const backupPath = path.join(backupsDir, backupName)
+    // 打包工作目录（排除 backups 自身）
+    const { execFile } = await import('child_process')
+    const { promisify } = await import('util')
+    const execFileAsync = promisify(execFile)
+    
+    // 用 tar 打包（排除 node_modules 和 backups）
+    const excludes = ['--exclude=backups', '--exclude=node_modules', '--exclude=.git', '--exclude=logs']
+    const files = fsSync.readdirSync(instance.workingDirectory).filter(f => f !== 'backups' && f !== 'node_modules' && f !== 'logs')
+    
+    // 并行处理（在服务器上 exec）
+    await new Promise<void>((resolve, reject) => {
+      const { spawn } = require('child_process') as any
+      const args = ['-czf', backupPath, ...excludes, ...files]
+      const proc = spawn('tar', args, { cwd: instance.workingDirectory })
+      proc.on('close', (code: number) => code === 0 ? resolve() : reject(new Error('tar 退出码 ' + code)))
+      proc.on('error', (e: any) => reject(e))
+    })
+    
+    const stats = fsSync.statSync(backupPath)
+    res.json({ success: true, message: '备份完成', data: { name: backupName, size: stats.size, path: backupPath } })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '备份失败', message: error.message })
+  }
+})
+
+// 备份列表
+router.get('/:id/backups', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!instanceManager) return res.status(500).json({ success: false, error: '实例管理器未初始化' })
+    const instance = instanceManager.getInstance(req.params.id)
+    if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
+    
+    const backupsDir = path.join(instance.workingDirectory, '..', 'backups')
+    if (!fsSync.existsSync(backupsDir)) return res.json({ success: true, data: [] })
+    
+    const files = fsSync.readdirSync(backupsDir)
+      .filter(f => f.endsWith('.tar.gz'))
+      .map(f => {
+        const st = fsSync.statSync(path.join(backupsDir, f))
+        return { name: f, size: st.size, mtime: st.mtime }
+      })
+      .sort((a: any, b: any) => b.mtime - a.mtime)
+    res.json({ success: true, data: files })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '获取备份列表失败', message: error.message })
+  }
+})
+
+// 恢复备份（先停服，恢复后提示重启）
+router.post('/:id/backups/:name/restore', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!instanceManager) return res.status(500).json({ success: false, error: '实例管理器未初始化' })
+    const instance = instanceManager.getInstance(req.params.id)
+    if (!instance) return res.status(404).json({ success: false, error: '实例不存在' })
+    
+    const name = req.params.name
+    if (!name.endsWith('.tar.gz') || name.includes('..')) {
+      return res.status(400).json({ success: false, error: '非法备份文件名' })
+    }
+    
+    const backupsDir = path.join(instance.workingDirectory, '..', 'backups')
+    const backupPath = path.join(backupsDir, name)
+    if (!fsSync.existsSync(backupPath)) return res.status(404).json({ success: false, error: '备份不存在' })
+    
+    // 先停止实例
+    if (instance.status === 'running') {
+      try { await instanceManager.stopInstance(instance.id) } catch {}
+      await new Promise(r => setTimeout(r, 3000))
+    }
+    
+    // 清空工作目录（保留 paper.jar/eula 等）并恢复
+    const keepFiles = ['paper.jar', 'eula.txt', 'server.properties', 'spigot.yml', 'bukkit.yml', 'paper.yml', 'config']
+    const files = fsSync.readdirSync(instance.workingDirectory)
+    for (const f of files) {
+      if (keepFiles.includes(f)) continue
+      const fp = path.join(instance.workingDirectory, f)
+      fsSync.rmSync(fp, { recursive: true, force: true })
+    }
+    
+    const { spawn } = require('child_process') as any
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn('tar', ['-xzf', backupPath, '-C', instance.workingDirectory])
+      proc.on('close', (code: number) => code === 0 ? resolve() : reject(new Error('tar 退出码 ' + code)))
+      proc.on('error', (e: any) => reject(e))
+    })
+    
+    res.json({ success: true, message: '恢复完成，请启动服务器' })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '恢复失败', message: error.message })
+  }
+})
+
+// 系统资源监控（该实例所在服务器）
+router.get('/:id/resources', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { execFile } = await import('child_process')
+    const { promisify } = await import('util')
+    const execFileAsync = promisify(execFile)
+    
+    const [cpuOut, memOut] = await Promise.all([
+      execFileAsync('ps', ['-p', process.pid.toString(), '-o', '%cpu=']).catch(() => ({ stdout: '0' })),
+      execFileAsync('free', ['-m']).catch(() => ({ stdout: '' })),
+    ])
+    res.json({ success: true, data: { cpu: cpuOut.stdout.trim(), memory: memOut.stdout } })
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: '获取资源失败', message: error.message })
+  }
+})
+

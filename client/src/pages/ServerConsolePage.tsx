@@ -423,6 +423,10 @@ export default function ServerConsolePage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const logRef = useRef<HTMLDivElement>(null)
   const [showMc, setShowMc] = useState(false)
+  const [activeTab, setActiveTab] = useState<'ops' | 'settings' | 'backups'>('ops')
+  const [properties, setProperties] = useState('')
+  const [backups, setBackups] = useState<any[]>([])
+  const [backingUp, setBackingUp] = useState(false)
 
   const selected = instances.find(i => i.id === selectedId) || null
 
@@ -550,6 +554,83 @@ export default function ServerConsolePage() {
     if (!text) { addLog('error', '请先填写公告内容'); return }
     sendCommand(panel.announce(text), '发送公告')
     setAnnounceText('')
+  }
+
+  // ===== 服务器管理功能 =====
+  const loadProperties = useCallback(async () => {
+    if (!selectedId) return
+    try {
+      const res: any = await apiClient.get(`/instances/${selectedId}/server-config/server.properties`)
+      const r = res.data || res
+      if (r?.success) setProperties(r.data?.content || '')
+    } catch { /* 忽略 */ }
+  }, [selectedId])
+
+  const saveProperties = async () => {
+    if (!selectedId) return
+    try {
+      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/server.properties`, { content: properties })
+      const r = res.data || res
+      if (r?.success) addLog('success', '配置文件已保存（重启服务器生效）')
+      else addLog('error', '保存失败: ' + (r?.error || ''))
+    } catch (e: any) {
+      addLog('error', '保存失败: ' + (e?.message || e))
+    }
+  }
+
+  const loadBackups = useCallback(async () => {
+    if (!selectedId) return
+    try {
+      const res: any = await apiClient.get(`/instances/${selectedId}/backups`)
+      const r = res.data || res
+      if (r?.success) setBackups(r.data || [])
+    } catch { /* 忽略 */ }
+  }, [selectedId])
+
+  const createBackup = async () => {
+    if (!selectedId || backingUp) return
+    setBackingUp(true)
+    addLog('info', '正在创建世界备份...')
+    try {
+      const res: any = await apiClient.post(`/instances/${selectedId}/backup`)
+      const r = res.data || res
+      if (r?.success) {
+        addLog('success', `备份完成: ${r.data?.name}`)
+        loadBackups()
+      } else addLog('error', '备份失败: ' + (r?.error || r?.message || ''))
+    } catch (e: any) {
+      addLog('error', '备份失败: ' + (e?.response?.data?.message || e?.message || e))
+    } finally {
+      setBackingUp(false)
+    }
+  }
+
+  const restoreBackup = async (name: string) => {
+    if (!selectedId) return
+    if (!window.confirm(`确定恢复备份 ${name}？服务器将停止，工作目录将被替换！`)) return
+    addLog('info', `正在恢复备份: ${name}（服务器将停止）`)
+    try {
+      const res: any = await apiClient.post(`/instances/${selectedId}/backups/${encodeURIComponent(name)}/restore`)
+      const r = res.data || res
+      if (r?.success) {
+        addLog('success', '恢复完成，请重新启动服务器')
+        loadBackups()
+      } else addLog('error', '恢复失败: ' + (r?.error || r?.message || ''))
+    } catch (e: any) {
+      addLog('error', '恢复失败: ' + (e?.response?.data?.message || e?.message || e))
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === 'settings') loadProperties()
+    if (activeTab === 'backups') loadBackups()
+  }, [activeTab, loadProperties, loadBackups])
+
+  const fmtSize = (n: number) => {
+    if (!n) return '0B'
+    if (n < 1024) return n + 'B'
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + 'KB'
+    return (n / 1024 / 1024).toFixed(1) + 'MB'
   }
 
   const typeLabel = (t?: string) => {
@@ -739,6 +820,76 @@ export default function ServerConsolePage() {
                   </button>
                 </div>
               </div>
+
+              {/* 功能 Tab 栏 */}
+              <div className="flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3">
+                {([
+                  { key: 'ops', label: '🎮 一键操作' },
+                  { key: 'settings', label: '⚙️ 服务器设置' },
+                  { key: 'backups', label: '💾 世界备份' },
+                ] as const).map(t => (
+                  <button key={t.key} onClick={() => setActiveTab(t.key)}
+                    className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                      activeTab === t.key
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* 设置 Tab */}
+              {activeTab === 'settings' && (
+                <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-900 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-gray-500">server.properties（修改后需重启服务器生效）</div>
+                    <button onClick={saveProperties}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
+                      保存设置
+                    </button>
+                  </div>
+                  <textarea
+                    value={properties}
+                    onChange={e => setProperties(e.target.value)}
+                    className="flex-1 w-full font-mono text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                  <div className="text-[11px] text-gray-400 mt-2">
+                    常用项：motd=服务器名 · difficulty=难度(easy/normal/hard/peaceful) · gamemode=模式(survival/creative) · pvp=true/false · max-players=最大人数 · online-mode=正版验证 · view-distance=视距
+                  </div>
+                </div>
+              )}
+
+              {/* 备份 Tab */}
+              {activeTab === 'backups' && (
+                <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-900 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-semibold text-gray-500">世界备份（含地图/玩家数据/配置）</div>
+                    <button onClick={createBackup} disabled={backingUp}
+                      className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white text-xs font-medium">
+                      {backingUp ? '备份中...' : '+ 创建备份'}
+                    </button>
+                  </div>
+                  {backups.length === 0 ? (
+                    <div className="text-sm text-gray-400 text-center py-8">暂无备份，点击右上角"创建备份"</div>
+                  ) : (
+                    <div className="space-y-2 overflow-y-auto">
+                      {backups.map(b => (
+                        <div key={b.name} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                          <div>
+                            <div className="text-xs font-medium font-mono">{b.name}</div>
+                            <div className="text-[11px] text-gray-500">{fmtSize(b.size)} · {new Date(b.mtime).toLocaleString()}</div>
+                          </div>
+                          <button onClick={() => restoreBackup(b.name)}
+                            className="px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs">
+                            恢复
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* 操作记录 + 高级命令 */}
               <div className="flex-1 flex flex-col min-h-0">
