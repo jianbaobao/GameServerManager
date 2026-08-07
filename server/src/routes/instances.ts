@@ -8,6 +8,7 @@ import fsSync from 'fs'
 import https from 'https'
 import http from 'http'
 import { promises as fs } from 'fs'
+import { spawn } from 'child_process'
 import path from 'path'
 
 const router = Router()
@@ -1002,7 +1003,7 @@ router.post('/:id/backup', authenticateToken, async (req: Request, res: Response
     
     // 并行处理（在服务器上 exec）
     await new Promise<void>((resolve, reject) => {
-      const { spawn } = require('child_process') as any
+      // spawn 已在顶部导入
       const args = ['-czf', backupPath, ...excludes, ...files]
       const proc = spawn('tar', args, { cwd: instance.workingDirectory })
       proc.on('close', (code: number) => code === 0 ? resolve() : reject(new Error('tar 退出码 ' + code)))
@@ -1070,7 +1071,7 @@ router.post('/:id/backups/:name/restore', authenticateToken, async (req: Request
       fsSync.rmSync(fp, { recursive: true, force: true })
     }
     
-    const { spawn } = require('child_process') as any
+    // spawn 已在顶部导入
     await new Promise<void>((resolve, reject) => {
       const proc = spawn('tar', ['-xzf', backupPath, '-C', instance.workingDirectory])
       proc.on('close', (code: number) => code === 0 ? resolve() : reject(new Error('tar 退出码 ' + code)))
