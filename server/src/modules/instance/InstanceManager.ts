@@ -873,7 +873,7 @@ export class InstanceManager extends EventEmitter {
       
       this.terminalManager.handleInput(virtualSocket, {
         sessionId: instance.terminalSessionId,
-        data: input
+        data: input + ''
       })
       
       return true
