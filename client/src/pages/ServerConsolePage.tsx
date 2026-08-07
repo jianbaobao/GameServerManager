@@ -430,6 +430,28 @@ export default function ServerConsolePage() {
   const [backups, setBackups] = useState<any[]>([])
   const [backingUp, setBackingUp] = useState(false)
   const CONFIG_FILES = ['server.properties', 'bukkit.yml', 'spigot.yml', 'paper.yml', 'whitelist.json', 'ops.json', 'banned-players.json', 'banned-ips.json', 'permissions.yml', 'usercache.json']
+  const [settingsMode, setSettingsMode] = useState<'form' | 'text'>('form')
+  const [propsForm, setPropsForm] = useState<Record<string, string>>({})
+
+  // server.properties 可视化表单字段定义
+  const PROPERTY_FIELDS: { key: string; label: string; type: 'text' | 'number' | 'select' | 'toggle'; options?: string[]; hint?: string }[] = [
+    { key: 'motd', label: '服务器名称 (MOTD)', type: 'text', hint: '玩家列表显示的服务器名' },
+    { key: 'difficulty', label: '难度', type: 'select', options: ['peaceful', 'easy', 'normal', 'hard'], hint: 'peaceful和平 / easy简单 / normal普通 / hard困难' },
+    { key: 'gamemode', label: '默认游戏模式', type: 'select', options: ['survival', 'creative', 'adventure', 'spectator'], hint: '新玩家进入时的模式' },
+    { key: 'pvp', label: '玩家对战 (PVP)', type: 'toggle', hint: '允许玩家互相攻击' },
+    { key: 'online-mode', label: '正版验证', type: 'toggle', hint: '开启=仅正版可进；关闭=离线/盗版可进' },
+    { key: 'white-list', label: '白名单', type: 'toggle', hint: '开启后仅白名单玩家可进' },
+    { key: 'max-players', label: '最大玩家数', type: 'number', hint: '服务器同时在线人数上限' },
+    { key: 'view-distance', label: '视距 (区块)', type: 'number', hint: '玩家可视范围，越大越吃性能' },
+    { key: 'server-port', label: '端口', type: 'number', hint: '服务器监听端口（默认25565）' },
+    { key: 'level-name', label: '世界名称', type: 'text', hint: '主世界文件夹名' },
+    { key: 'spawn-monsters', label: '生成怪物', type: 'toggle', hint: '夜晚/黑暗处生成怪物' },
+    { key: 'spawn-animals', label: '生成动物', type: 'toggle', hint: '生成被动生物' },
+    { key: 'spawn-npcs', label: '生成NPC', type: 'toggle', hint: '生成村民等NPC' },
+    { key: 'enable-command-block', label: '命令方块', type: 'toggle', hint: '允许使用命令方块' },
+    { key: 'allow-flight', label: '允许飞行', type: 'toggle', hint: '防止飞行作弊踢出' },
+    { key: 'hardcore', label: '极限模式', type: 'toggle', hint: '死亡即封禁' },
+  ]
 
   const selected = instances.find(i => i.id === selectedId) || null
 
@@ -563,19 +585,54 @@ export default function ServerConsolePage() {
     const f = file || configFile
     try {
       const res: any = await apiClient.get(`/instances/${selectedId}/server-config/${encodeURIComponent(f)}`)
-      if (res?.success) setProperties(res.data?.content || '')
+      if (res?.success) {
+        const content = res.data?.content || ''
+        setProperties(content)
+        if (f === 'server.properties') {
+          // 解析现有配置到表单
+          const parsed: Record<string, string> = {}
+          content.split('\n').forEach(line => {
+            const m = line.match(/^\s*([a-zA-Z0-9-]+)\s*=\s*(.*)$/)
+            if (m) parsed[m[1]] = m[2].trim()
+          })
+          setPropsForm(parsed)
+        }
+      }
     } catch { /* 忽略 */ }
   }, [selectedId, configFile])
 
   const saveProperties = async () => {
     if (!selectedId) return
     try {
-      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/${encodeURIComponent(configFile)}`, { content: properties })
+      let contentToSave = properties
+      if (settingsMode === 'form' && configFile === 'server.properties') {
+        // 表单模式：合并表单字段到现有文本
+        const lines = properties.split('\n')
+        const keySet = new Set(Object.keys(propsForm))
+        const updated = lines.map(line => {
+          const m = line.match(/^\s*([a-zA-Z0-9-]+)\s*=\s*(.*)$/)
+          if (m && keySet.has(m[1])) {
+            const v = propsForm[m[1]]
+            return `${m[1]}=${v}`
+          }
+          return line
+        })
+        // 追加缺失字段
+        const existingKeys = new Set(lines.map(l => { const m = l.match(/^\s*([a-zA-Z0-9-]+)\s*=/); return m ? m[1] : null }).filter(Boolean))
+        const missing = Object.keys(propsForm).filter(k => !existingKeys.has(k))
+        missing.forEach(k => updated.push(`${k}=${propsForm[k]}`))
+        contentToSave = updated.join('\n')
+      }
+      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/${encodeURIComponent(configFile)}`, { content: contentToSave })
       if (res?.success) addLog('success', `${configFile} 已保存（重启服务器生效）`)
       else addLog('error', '保存失败: ' + (res?.error || ''))
     } catch (e: any) {
       addLog('error', '保存失败: ' + (e?.message || e))
     }
+  }
+
+  const updateFormField = (key: string, value: string) => {
+    setPropsForm(prev => ({ ...prev, [key]: value }))
   }
 
   const loadBackups = useCallback(async () => {
@@ -855,26 +912,82 @@ export default function ServerConsolePage() {
                         ))}
                       </select>
                       <span className="text-xs text-gray-400">（{configFile}）</span>
+                      {configFile === 'server.properties' && (
+                        <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
+                          <button onClick={() => setSettingsMode('form')}
+                            className={`px-3 py-1.5 text-xs ${settingsMode === 'form' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                            可视化
+                          </button>
+                          <button onClick={() => setSettingsMode('text')}
+                            className={`px-3 py-1.5 text-xs ${settingsMode === 'text' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                            文本
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <button onClick={saveProperties}
                       className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium">
                       保存设置
                     </button>
                   </div>
-                  <textarea
-                    value={properties}
-                    onChange={e => setProperties(e.target.value)}
-                    className="flex-1 w-full font-mono text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  />
-                  <div className="text-[11px] text-gray-400 mt-2">
-                    {configFile === 'server.properties' ? (
-                      <>常用项：motd=服务器名 · difficulty=难度 · gamemode=模式 · pvp=true/false · max-players=最大人数 · online-mode=正版验证 · view-distance=视距</>
-                    ) : configFile.endsWith('.json') ? (
-                      <>JSON 格式：whitelist.json/ops.json/banned-players.json 等名单文件，保存后执行对应命令刷新（如 /whitelist reload）</>
-                    ) : (
-                      <>YAML 格式：bukkit/spigot/paper 配置，保存后重启服务器生效</>
-                    )}
-                  </div>
+
+                  {configFile === 'server.properties' && settingsMode === 'form' ? (
+                    /* 可视化表单模式 */
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                      {PROPERTY_FIELDS.map(f => (
+                        <div key={f.key} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                          <div className="flex-1 mr-3">
+                            <div className="text-xs font-medium">{f.label}</div>
+                            <div className="text-[10px] text-gray-400">{f.hint}</div>
+                          </div>
+                          {f.type === 'toggle' ? (
+                            <button
+                              onClick={() => updateFormField(f.key, (propsForm[f.key] || 'false') === 'true' ? 'false' : 'true')}
+                              className={`relative w-12 h-6 rounded-full transition-colors ${(propsForm[f.key] || 'false') === 'true' ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            >
+                              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${(propsForm[f.key] || 'false') === 'true' ? 'left-6' : 'left-0.5'}`} />
+                            </button>
+                          ) : f.type === 'select' ? (
+                            <select
+                              value={propsForm[f.key] || ''}
+                              onChange={e => updateFormField(f.key, e.target.value)}
+                              className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs w-36"
+                            >
+                              {f.options?.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          ) : (
+                            <input
+                              type={f.type === 'number' ? 'number' : 'text'}
+                              value={propsForm[f.key] || ''}
+                              onChange={e => updateFormField(f.key, e.target.value)}
+                              className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs w-36"
+                            />
+                          )}
+                        </div>
+                      ))}
+                      <div className="text-[11px] text-gray-400 pt-1">
+                        表单保存会合并到 server.properties；高级选项请切换到「文本」模式编辑
+                      </div>
+                    </div>
+                  ) : (
+                    /* 文本编辑模式 */
+                    <>
+                      <textarea
+                        value={properties}
+                        onChange={e => setProperties(e.target.value)}
+                        className="flex-1 w-full font-mono text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                      <div className="text-[11px] text-gray-400 mt-2">
+                        {configFile === 'server.properties' ? (
+                          <>常用项：motd=服务器名 · difficulty=难度 · gamemode=模式 · pvp=true/false · max-players=最大人数 · online-mode=正版验证 · view-distance=视距</>
+                        ) : configFile.endsWith('.json') ? (
+                          <>JSON 格式：whitelist.json/ops.json/banned-players.json 等名单文件，保存后执行对应命令刷新（如 /whitelist reload）</>
+                        ) : (
+                          <>YAML 格式：bukkit/spigot/paper 配置，保存后重启服务器生效</>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
