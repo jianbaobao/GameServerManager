@@ -493,9 +493,8 @@ export default function ServerConsolePage() {
     addLog('command', (label ? label + ': ' : '') + command)
     try {
       const res: any = await apiClient.post(`/instances/${selectedId}/input`, { input: command })
-      const r = res.data || res
-      if (r?.success === false) {
-        addLog('error', '操作失败: ' + (r.message || r.error || ''))
+      if (res?.success === false) {
+        addLog('error', '操作失败: ' + (res.message || res.error || ''))
       } else {
         addLog('success', '操作已执行')
       }
@@ -508,12 +507,11 @@ export default function ServerConsolePage() {
     if (!selectedId || busy) return
     setBusy(true)
     try {
-      const res = action === 'start'
+      const res: any = action === 'start'
         ? await apiClient.startInstance(selectedId)
         : await apiClient.stopInstance(selectedId)
-      const r: any = res.data || res
-      if (r?.success === false) {
-        addLog('error', `${label}失败: ${r.error || r.message || '未知错误'}`)
+      if (res?.success === false) {
+        addLog('error', `${label}失败: ${res.error || res.message || '未知错误'}`)
       } else {
         addLog('success', `${label}成功`)
       }
@@ -565,8 +563,7 @@ export default function ServerConsolePage() {
     const f = file || configFile
     try {
       const res: any = await apiClient.get(`/instances/${selectedId}/server-config/${encodeURIComponent(f)}`)
-      const r = res.data || res
-      if (r?.success) setProperties(r.data?.content || '')
+      if (res?.success) setProperties(res.data?.content || '')
     } catch { /* 忽略 */ }
   }, [selectedId, configFile])
 
@@ -574,9 +571,8 @@ export default function ServerConsolePage() {
     if (!selectedId) return
     try {
       const res: any = await apiClient.put(`/instances/${selectedId}/server-config/${encodeURIComponent(configFile)}`, { content: properties })
-      const r = res.data || res
-      if (r?.success) addLog('success', `${configFile} 已保存（重启服务器生效）`)
-      else addLog('error', '保存失败: ' + (r?.error || ''))
+      if (res?.success) addLog('success', `${configFile} 已保存（重启服务器生效）`)
+      else addLog('error', '保存失败: ' + (res?.error || ''))
     } catch (e: any) {
       addLog('error', '保存失败: ' + (e?.message || e))
     }
@@ -586,9 +582,7 @@ export default function ServerConsolePage() {
     if (!selectedId) return
     try {
       const res: any = await apiClient.get(`/instances/${selectedId}/backups`)
-      const body = res && res.data
-      const list = body && body.success ? (body.data || []) : []
-      setBackups(list)
+      if (res?.success) setBackups(res.data || [])
     } catch { /* 忽略 */ }
   }, [selectedId])
 
@@ -598,11 +592,10 @@ export default function ServerConsolePage() {
     addLog('info', '正在创建世界备份...')
     try {
       const res: any = await apiClient.post(`/instances/${selectedId}/backup`)
-      const r = res.data || res
-      if (r?.success) {
-        addLog('success', `备份完成: ${r.data?.name}`)
+      if (res?.success) {
+        addLog('success', `备份完成: ${res.data?.name}`)
         loadBackups()
-      } else addLog('error', '备份失败: ' + (r?.error || r?.message || ''))
+      } else addLog('error', '备份失败: ' + (res?.error || res?.message || ''))
     } catch (e: any) {
       addLog('error', '备份失败: ' + (e?.response?.data?.message || e?.message || e))
     } finally {
@@ -616,11 +609,10 @@ export default function ServerConsolePage() {
     addLog('info', `正在恢复备份: ${name}（服务器将停止）`)
     try {
       const res: any = await apiClient.post(`/instances/${selectedId}/backups/${encodeURIComponent(name)}/restore`)
-      const r = res.data || res
-      if (r?.success) {
+      if (res?.success) {
         addLog('success', '恢复完成，请重新启动服务器')
         loadBackups()
-      } else addLog('error', '恢复失败: ' + (r?.error || r?.message || ''))
+      } else addLog('error', '恢复失败: ' + (res?.error || res?.message || ''))
     } catch (e: any) {
       addLog('error', '恢复失败: ' + (e?.response?.data?.message || e?.message || e))
     }
