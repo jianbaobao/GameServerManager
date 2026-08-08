@@ -31,6 +31,7 @@ export default function ServerConfigPage() {
   const [loading, setLoading] = useState(false)
   const [schema, setSchema] = useState<GameSchema | null>(null)
   const [schemaError, setSchemaError] = useState('')
+  const [configExists, setConfigExists] = useState(false)
   const [logs, setLogs] = useState<{ time: string; type: string; text: string }[]>([])
   const logRef = useRef<HTMLDivElement>(null)
 
@@ -81,7 +82,9 @@ export default function ServerConfigPage() {
         setContent(c)
         setForm(values)
         setSchemaError('')
+        setConfigExists(true)
       } else {
+        setConfigExists(false)
         setSchemaError(res?.error || '配置加载失败')
       }
     } catch (e: any) {
@@ -181,7 +184,7 @@ export default function ServerConfigPage() {
                     {loading && <span className="text-xs text-gray-400">加载中...</span>}
                     {schemaError && <span className="text-xs text-orange-500">{schemaError}</span>}
                   </div>
-                  {schema && (
+                  {schema && configExists && (
                     <button onClick={save} disabled={saving}
                       className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium">
                       {saving ? '保存中...' : '💾 保存设置'}
@@ -195,6 +198,21 @@ export default function ServerConfigPage() {
                 {!schema ? (
                   <div className="flex items-center justify-center h-full text-gray-400 text-sm">
                     {schemaError || '该游戏暂不支持可视化配置，可用「文件管理」直接编辑配置文件'}
+                  </div>
+                ) : !configExists ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 px-8">
+                    <div className="text-4xl mb-3">{schema.icon}</div>
+                    <div className="text-sm font-medium text-gray-500 mb-1">{schema.gameName} 无可用配置文件</div>
+                    <div className="text-xs max-w-md leading-relaxed">
+                      {schemaError || (
+                        schema.file
+                          ? `配置文件 ${schema.file} 尚未生成（服务器首次启动后自动创建）。请先在「服主控制台」启动服务器，再回来配置。`
+                          : '该游戏通过启动命令参数配置（如服务器名称/密码/端口），请到「服主控制台」→ 实例 → 修改启动命令。'
+                      )}
+                    </div>
+                    <div className="mt-4 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs text-gray-500">
+                      💡 到「文件管理」也可以直接查看/编辑服务器文件
+                    </div>
                   </div>
                 ) : mode === 'form' ? (
                   <div className="max-w-3xl mx-auto space-y-2">
