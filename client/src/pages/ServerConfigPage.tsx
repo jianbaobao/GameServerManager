@@ -3,26 +3,21 @@ import apiClient from '@/utils/api'
 import type { Instance } from '@/types'
 import { useNotificationStore } from '@/stores/notificationStore'
 
-const PROPERTY_FIELDS: { key: string; label: string; type: 'text' | 'number' | 'select' | 'toggle'; options?: string[]; hint?: string }[] = [
-  { key: 'motd', label: '服务器名称 (MOTD)', type: 'text', hint: '玩家列表显示的服务器名' },
-  { key: 'difficulty', label: '难度', type: 'select', options: ['peaceful', 'easy', 'normal', 'hard'], hint: '和平 / 简单 / 普通 / 困难' },
-  { key: 'gamemode', label: '默认游戏模式', type: 'select', options: ['survival', 'creative', 'adventure', 'spectator'], hint: '新玩家进入时的模式' },
-  { key: 'pvp', label: '玩家对战 (PVP)', type: 'toggle', hint: '允许玩家互相攻击' },
-  { key: 'online-mode', label: '正版验证', type: 'toggle', hint: '开启=仅正版可进；关闭=离线可进' },
-  { key: 'white-list', label: '白名单', type: 'toggle', hint: '开启后仅白名单玩家可进' },
-  { key: 'max-players', label: '最大玩家数', type: 'number', hint: '同时在线人数上限' },
-  { key: 'view-distance', label: '视距 (区块)', type: 'number', hint: '玩家可视范围' },
-  { key: 'server-port', label: '端口', type: 'number', hint: '监听端口（默认25565）' },
-  { key: 'level-name', label: '世界名称', type: 'text', hint: '主世界文件夹名' },
-  { key: 'spawn-monsters', label: '生成怪物', type: 'toggle', hint: '夜晚生成怪物' },
-  { key: 'spawn-animals', label: '生成动物', type: 'toggle', hint: '生成被动生物' },
-  { key: 'spawn-npcs', label: '生成NPC', type: 'toggle', hint: '生成村民等' },
-  { key: 'enable-command-block', label: '命令方块', type: 'toggle', hint: '允许命令方块' },
-  { key: 'allow-flight', label: '允许飞行', type: 'toggle', hint: '防止飞行作弊踢出' },
-  { key: 'hardcore', label: '极限模式', type: 'toggle', hint: '死亡即封禁' },
-]
-
-const CONFIG_FILES = ['server.properties', 'bukkit.yml', 'spigot.yml', 'paper.yml', 'whitelist.json', 'ops.json', 'banned-players.json', 'banned-ips.json', 'permissions.yml', 'usercache.json']
+interface GameField {
+  key: string
+  label: string
+  type: 'text' | 'number' | 'select' | 'toggle' | 'password'
+  options?: string[]
+  hint?: string
+}
+interface GameSchema {
+  gameKey: string
+  gameName: string
+  icon: string
+  file: string
+  format: string
+  fields: GameField[]
+}
 
 export default function ServerConfigPage() {
   const { addNotification } = useNotificationStore()
@@ -34,6 +29,8 @@ export default function ServerConfigPage() {
   const [form, setForm] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [schema, setSchema] = useState<GameSchema | null>(null)
+  const [schemaError, setSchemaError] = useState('')
   const [logs, setLogs] = useState<{ time: string; type: string; text: string }[]>([])
   const logRef = useRef<HTMLDivElement>(null)
 
@@ -56,22 +53,36 @@ export default function ServerConfigPage() {
     }
   }, [selectedId, addLog])
 
+  const loadSchema = useCallback(async (id: string) => {
+    try {
+      const res: any = await apiClient.get(`/game-config/schema/${id}`)
+      if (res?.success) {
+        setSchema(res.data)
+        setSchemaError('')
+        setConfigFile(res.data?.file || 'server.properties')
+      } else {
+        setSchema(null)
+        setSchemaError(res?.error || '该游戏暂不支持可视化配置')
+      }
+    } catch {
+      setSchema(null)
+      setSchemaError('加载配置模板失败')
+    }
+  }, [])
+
   const loadConfig = useCallback(async (id: string, file: string) => {
     if (!id) return
     setLoading(true)
     try {
-      const res: any = await apiClient.get(`/instances/${id}/server-config/${encodeURIComponent(file)}`)
+      const res: any = await apiClient.get(`/game-config/${id}`)
       if (res?.success) {
         const c = res.data?.content || ''
+        const values = res.data?.values || {}
         setContent(c)
-        if (file === 'server.properties') {
-          const parsed: Record<string, string> = {}
-          c.split('\n').forEach(line => {
-            const m = line.match(/^\s*([a-zA-Z0-9-]+)\s*=\s*(.*)$/)
-            if (m) parsed[m[1]] = m[2].trim()
-          })
-          setForm(parsed)
-        }
+        setForm(values)
+        setSchemaError('')
+      } else {
+        setSchemaError(res?.error || '配置加载失败')
       }
     } catch (e: any) {
       addLog('error', '加载配置失败: ' + (e?.message || e))
@@ -83,8 +94,12 @@ export default function ServerConfigPage() {
   useEffect(() => { loadInstances() }, [loadInstances])
 
   useEffect(() => {
-    if (selectedId) loadConfig(selectedId, configFile)
-  }, [selectedId, configFile, loadConfig])
+    if (selectedId) loadSchema(selectedId)
+  }, [selectedId, loadSchema])
+
+  useEffect(() => {
+    if (selectedId && schema) loadConfig(selectedId, configFile)
+  }, [selectedId, configFile, loadConfig, schema])
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
@@ -94,22 +109,9 @@ export default function ServerConfigPage() {
     if (!selectedId || saving) return
     setSaving(true)
     try {
-      let toSave = content
-      if (configFile === 'server.properties' && mode === 'form') {
-        const lines = content.split('\n')
-        const keySet = new Set(Object.keys(form))
-        const updated = lines.map(line => {
-          const m = line.match(/^\s*([a-zA-Z0-9-]+)\s*=\s*(.*)$/)
-          if (m && keySet.has(m[1])) return `${m[1]}=${form[m[1]]}`
-          return line
-        })
-        const existingKeys = new Set(lines.map(l => { const m = l.match(/^\s*([a-zA-Z0-9-]+)\s*=/); return m ? m[1] : null }).filter(Boolean))
-        Object.keys(form).filter(k => !existingKeys.has(k)).forEach(k => updated.push(`${k}=${form[k]}`))
-        toSave = updated.join('\n')
-      }
-      const res: any = await apiClient.put(`/instances/${selectedId}/server-config/${encodeURIComponent(configFile)}`, { content: toSave })
+      const res: any = await apiClient.put(`/game-config/${selectedId}`, { values: form })
       if (res?.success) {
-        addLog('success', `${configFile} 已保存（重启服务器生效）`)
+        addLog('success', `${schema?.gameName || ''} 配置已保存（重启服务器生效）`)
         loadConfig(selectedId, configFile)
       } else {
         addLog('error', '保存失败: ' + (res?.error || ''))
@@ -123,14 +125,13 @@ export default function ServerConfigPage() {
 
   const updateField = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }))
 
-  const isMc = !!selected && (selected.instanceType === 'minecraft-java' || selected.instanceType === 'minecraft-bedrock'
-    || (selected.gameKey || '').toLowerCase().includes('minecraft'))
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4 bg-white dark:bg-gray-900">
         <h1 className="text-xl font-bold">服务器配置</h1>
-        <p className="text-sm text-gray-500 mt-0.5">可视化配置服务器：下拉 / 开关 / 填写，无需手动改文本</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {schema ? `${schema.icon} ${schema.gameName} 专属配置 · 文件: ${schema.file}` : '选择服务器查看专属配置'}
+        </p>
       </div>
 
       <div className="flex h-[calc(100vh-140px)]">
@@ -164,11 +165,12 @@ export default function ServerConfigPage() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <select value={configFile} onChange={e => setConfigFile(e.target.value)}
-                      className="px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      {CONFIG_FILES.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                    {configFile === 'server.properties' && (
+                    {schema && (
+                      <span className="text-sm font-medium px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800">
+                        {schema.icon} {schema.gameName}
+                      </span>
+                    )}
+                    {schema && (
                       <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
                         <button onClick={() => setMode('form')}
                           className={`px-3 py-1.5 text-sm ${mode === 'form' ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>可视化</button>
@@ -177,22 +179,26 @@ export default function ServerConfigPage() {
                       </div>
                     )}
                     {loading && <span className="text-xs text-gray-400">加载中...</span>}
+                    {schemaError && <span className="text-xs text-orange-500">{schemaError}</span>}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isMc && <span className="text-xs px-2 py-1 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">⛏ 我的世界服务器</span>}
+                  {schema && (
                     <button onClick={save} disabled={saving}
                       className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-sm font-medium">
                       {saving ? '保存中...' : '💾 保存设置'}
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
 
               {/* 表单/文本 主体 */}
               <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-gray-900">
-                {configFile === 'server.properties' && mode === 'form' ? (
+                {!schema ? (
+                  <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                    {schemaError || '该游戏暂不支持可视化配置，可用「文件管理」直接编辑配置文件'}
+                  </div>
+                ) : mode === 'form' ? (
                   <div className="max-w-3xl mx-auto space-y-2">
-                    {PROPERTY_FIELDS.map(f => (
+                    {schema.fields.map(f => (
                       <div key={f.key} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
                         <div className="flex-1 mr-3">
                           <div className="text-sm font-medium">{f.label}</div>
@@ -209,21 +215,19 @@ export default function ServerConfigPage() {
                             {f.options?.map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
                         ) : (
-                          <input type={f.type === 'number' ? 'number' : 'text'} value={form[f.key] || ''}
-                            onChange={e => updateField(f.key, e.target.value)}
+                          <input type={f.type === 'number' ? 'number' : f.type === 'password' ? 'password' : 'text'}
+                            value={form[f.key] || ''} onChange={e => updateField(f.key, e.target.value)}
                             className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm w-44" />
                         )}
                       </div>
                     ))}
-                    <div className="text-[11px] text-gray-400 pt-1">表单保存会合并到 server.properties；高级选项切「文本」模式</div>
+                    <div className="text-[11px] text-gray-400 pt-1">配置保存到 {schema.file}，重启服务器生效</div>
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
                     <textarea value={content} onChange={e => setContent(e.target.value)}
                       className="flex-1 w-full font-mono text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[300px]" />
-                    <div className="text-[11px] text-gray-400 mt-2">
-                      {configFile.endsWith('.json') ? 'JSON 名单文件（whitelist/ops/banned），保存后执行对应命令刷新' : 'YAML/配置文件，保存后重启服务器生效'}
-                    </div>
+                    <div className="text-[11px] text-gray-400 mt-2">文本模式直接编辑 {schema.file}，保存后重启生效</div>
                   </div>
                 )}
               </div>

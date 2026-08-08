@@ -35,6 +35,7 @@ import filesRouter from './routes/files.js'
 import { setupInstanceRoutes } from './routes/instances.js'
 import steamcmdRouter, { setSteamCMDManager } from './routes/steamcmd.js'
 import gameDeploymentRouter, { setGameDeploymentManagers } from './routes/gameDeployment.js'
+import gameConfigRouterV2, { setInstanceManagerForGameConfig } from './routes/game-config.js'
 import { minecraftRouter, setMinecraftDependencies } from './routes/minecraft.js'
 import moreGamesRouter from './routes/moreGames.js'
 import weatherRouter from './routes/weather.js'
@@ -725,6 +726,7 @@ async function startServer() {
     app.use('/api/games', setupGameRoutes(gameManager))
     app.use('/api/system', setupSystemRoutes(systemManager))
     app.use('/api/files', filesRouter)
+    app.use('/api/game-config', gameConfigRouterV2)
     app.use('/api/instances', setupInstanceRoutes(instanceManager))
     app.use('/api/scheduled-tasks', setupScheduledTaskRoutes(schedulerManager))
     app.use('/api/config', setupConfigRoutes(configManager))
