@@ -1087,6 +1087,8 @@ app.use('/api/ai', aiRouter)
       })
     })
 
+    setInstanceManagerForGameConfig(instanceManager)
+
     const PORT = parseInt(process.env.SERVER_PORT || process.env.PORT || '3001', 10)
     const HOST = process.env.HOST || '::'
 
